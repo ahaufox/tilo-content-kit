@@ -36,7 +36,7 @@ export function ProofSection() {
           <p>
             输入若在开头重复了与文书名全等的一级标题，stripLeadingDocumentTitle 会切掉这一处开头标题；
             普通段落里的同名文本不会被删除。「一、」和「诉讼请求：」由 normalizeLegalMarkdown 整理。
-            这些规则只对中国公文书写习惯成立。
+            这些规则只对中国公文书写习惯成立 —— 不做法律业务，整块跳过即可。
           </p>
           <p className="why">收益：模型常见的标题重复和层级混乱，不必在业务里再写一套正则。</p>
         </article>

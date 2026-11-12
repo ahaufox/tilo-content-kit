@@ -22,12 +22,14 @@ import {
   useUndoManagerStatus,
 } from '@tilo-ui/content-kit/collab';
 import DemoCard from './DemoCard';
+import { SplitPanes } from './SplitPanes';
+import { Toast, useToast } from './Toast';
 import { Accordion } from './Accordion';
 import { CodeSample } from './CodeSample';
 import { SNIPPETS } from '../data/snippets';
 
 const AI_SENTENCE =
-  'AI 补充：经核对账簿，被告尚欠货款 128,600 元，建议在诉请中一并主张逾期利息。';
+  'AI 补充：本周灰度扩量涉及结算与账单两个模块，建议先在小流量商户验证对账口径。';
 
 /** 在 Yjs 层构造段落（XmlElement 名 = PM 节点类型名，与 SDK 测试同构） */
 function yParagraph(text: string): Y.XmlElement {
@@ -47,7 +49,7 @@ export function CollabDemo() {
     const fragment = doc.getXmlFragment('content');
     doc.transact(() => {
       fragment.insert(0, [
-        yParagraph('左侧为本地编辑通道：直接在此输入文字。'),
+        yParagraph('左侧为本地编辑通道：直接在此输入文字（会议纪要场景）。'),
         yParagraph('右侧为 AI 编辑通道：点击「AI 写入一段」观察撤销隔离。'),
         yParagraph(''),
       ]);
@@ -76,6 +78,7 @@ export function CollabDemo() {
     if (editorAgent) patchYjsOriginSync(editorAgent, ydoc);
   }, [editorLocal, editorAgent, ydoc]);
 
+  const toast = useToast();
   const managers = useIsolatedUndoManagers({ ydoc });
   const status = useUndoManagerStatus(managers);
 
@@ -103,6 +106,7 @@ export function CollabDemo() {
         return true;
       })
       .run();
+    toast.show('已写入');
   };
 
   return (
@@ -119,9 +123,12 @@ export function CollabDemo() {
       }
     >
       <div className="demo-controls demo-actions">
-        <button className="btn primary" onClick={aiWrite}>
-          AI 写入一段
-        </button>
+        <span className="toast-anchor">
+          <button className="btn primary" onClick={aiWrite}>
+            AI 写入一段
+          </button>
+          <Toast toast={toast.toast} />
+        </span>
         <button className="btn" onClick={() => managers.localUndoManager.undo()} disabled={!status.canUndo}>
           撤销本地编辑
         </button>
@@ -139,16 +146,33 @@ export function CollabDemo() {
         <span className={`chip${status.canUndoAgent ? ' ok' : ''}`}>AI 可撤销: <b>{String(status.canUndoAgent)}</b></span>
       </div>
 
-      <div className="collab-grid">
-        <div className="collab-pane">
-          <span className="pane-label">本地编辑（律师）— 输入即同步到右侧</span>
-          <EditorContent editor={editorLocal} />
-        </div>
-        <div className="collab-pane ai">
-          <span className="pane-label">AI 编辑器 — 内容写入使用 AGENT_ORIGIN</span>
-          <EditorContent editor={editorAgent} />
-        </div>
-      </div>
+      <SplitPanes
+        label="协同编辑双栏"
+        panes={[
+          {
+            id: 'local',
+            label: '本地编辑',
+            className: 'collab-pane',
+            content: (
+              <>
+                <span className="pane-label">本地编辑（人）— 输入即同步到右侧</span>
+                <EditorContent editor={editorLocal} />
+              </>
+            ),
+          },
+          {
+            id: 'agent',
+            label: 'AI 编辑器',
+            className: 'collab-pane ai',
+            content: (
+              <>
+                <span className="pane-label">AI 编辑器 — 内容写入使用 AGENT_ORIGIN</span>
+                <EditorContent editor={editorAgent} />
+              </>
+            ),
+          },
+        ]}
+      />
 
       <p className="demo-note">
         验证方法：在左栏末尾空行输入文字 → 点「撤销 AI 编辑」不影响你的输入；

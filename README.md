@@ -9,6 +9,8 @@
 
 📖 **在线文档与交互式 Demo**：<https://ahaufox.github.io/tilo-content-kit/>（含 SSE 流式渲染实时演示，文档站本身即由本 SDK 渲染）
 
+🔗 **源码双端托管**：[GitHub](https://github.com/ahaufox/tilo-content-kit) · [CNB](https://cnb.cool/tilo-work/tilo-content-kit) —— 同一份提交，GitHub 侧为镜像与 Pages 部署源，CNB 侧为主开发仓（Issue / PR 均可提）。
+
 一套**按需引入、零捆绑**的前端内容能力库：你只取自己要的那一块，其余不会进包。它脱胎于真实的法律文书生产系统，**核心面向 AI Agent 相关前端**——尤其擅长对接后端 SSE 流式输出，边收边渲染，把 token 流实时变成可用内容。核心层与具体产品解耦，也可独立用于任何需要富内容渲染 / 编辑的场景。
 
 ## ✨ 特性
@@ -98,7 +100,9 @@ function AgentReply({ body }: { body: ReadableStream<Uint8Array> }) {
 我们非常欢迎社区贡献 —— 一行文档、一个示例、一块新能力都算数。
 
 ```bash
+# GitHub 镜像 / CNB 主仓任选其一
 git clone https://github.com/ahaufox/tilo-content-kit.git
+git clone https://cnb.cool/tilo-work/tilo-content-kit.git
 cd tilo-content-kit
 pnpm install
 pnpm build

@@ -16,6 +16,7 @@ import {
   stripLeadingDocumentTitle,
 } from '@tilo-ui/content-kit/legal';
 import DemoCard from './DemoCard';
+import { SplitPanes } from './SplitPanes';
 import { Accordion } from './Accordion';
 import { CodeSample } from './CodeSample';
 import { SNIPPETS } from '../data/snippets';
@@ -65,57 +66,79 @@ export function LegalDemo() {
       title="法律文书规则"
       description={
         <>
-          处理中国公文的 Markdown 书写习惯：首行文书名去重、独立成行的
-          「诉讼请求：」等段落小标题加粗、大写数字章节行（一、二、……）
+          全站唯一带行业约束的入口：只对中文公文书写习惯成立。首行文书名去重、
+          独立成行的「诉讼请求：」等段落小标题加粗、大写数字章节行（一、二、……）
           精准提升为标题——连续序数词（如「二月份」）与断句标点结尾不误伤。
+          不做法律业务时，跳过这个入口即可，其余六个入口与行业无关。
         </>
       }
     >
-      <div className="demo-io">
-        <div className="demo-io-pane">
-          <span className="pane-label">输入（可编辑）</span>
-          <textarea
-            id="legal-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            spellCheck={false}
-            rows={11}
-          />
-          <span className="pane-label">文书名（stripLeadingDocumentTitle 比对基准）</span>
-          <input
-            id="legal-doc-title"
-            className="inline-input"
-            value={docTitle}
-            onChange={(e) => setDocTitle(e.target.value)}
-          />
-        </div>
-        <div className="demo-io-pane">
-          <span className="pane-label">规则开关</span>
-          <label className="switch-row">
-            <input type="checkbox" checked={strip} onChange={(e) => setStrip(e.target.checked)} />
-            去重首行文书名（stripLeadingDocumentTitle）
-          </label>
-          <label className="switch-row">
-            <input
-              type="checkbox"
-              checked={bold && !normalize}
-              disabled={normalize}
-              onChange={(e) => setBold(e.target.checked)}
-            />
-            段落小标题加粗（boldLegalSectionHeadings）
-          </label>
-          <label className="switch-row">
-            <input
-              type="checkbox"
-              checked={normalize}
-              onChange={(e) => setNormalize(e.target.checked)}
-            />
-            整体归一化（normalizeLegalMarkdown，含小标题加粗与章节提升）
-          </label>
-          <span className="pane-label">处理结果（Markdown 源码）</span>
-          <pre className="code-out">{output}</pre>
-        </div>
-      </div>
+      <SplitPanes
+        label="法律规则输入与开关"
+        panes={[
+          {
+            id: 'input',
+            label: '输入',
+            className: 'demo-io-pane',
+            content: (
+              <>
+                <span className="pane-label">输入（可编辑）</span>
+                <textarea
+                  id="legal-input"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  spellCheck={false}
+                  rows={11}
+                />
+                <span className="pane-label">文书名（stripLeadingDocumentTitle 比对基准）</span>
+                <input
+                  id="legal-doc-title"
+                  className="inline-input"
+                  value={docTitle}
+                  onChange={(e) => setDocTitle(e.target.value)}
+                />
+              </>
+            ),
+          },
+          {
+            id: 'rules',
+            label: '规则与结果',
+            className: 'demo-io-pane',
+            content: (
+              <>
+                <span className="pane-label">规则开关</span>
+                <label className="switch-row">
+                  <input
+                    type="checkbox"
+                    checked={strip}
+                    onChange={(e) => setStrip(e.target.checked)}
+                  />
+                  去重首行文书名（stripLeadingDocumentTitle）
+                </label>
+                <label className="switch-row">
+                  <input
+                    type="checkbox"
+                    checked={bold && !normalize}
+                    disabled={normalize}
+                    onChange={(e) => setBold(e.target.checked)}
+                  />
+                  段落小标题加粗（boldLegalSectionHeadings）
+                </label>
+                <label className="switch-row">
+                  <input
+                    type="checkbox"
+                    checked={normalize}
+                    onChange={(e) => setNormalize(e.target.checked)}
+                  />
+                  整体归一化（normalizeLegalMarkdown，含小标题加粗与章节提升）
+                </label>
+                <span className="pane-label">处理结果（Markdown 源码）</span>
+                <pre className="code-out">{output}</pre>
+              </>
+            ),
+          },
+        ]}
+      />
 
       <div className="demo-sub">渲染效果（MarkdownContent，随上方规则实时更新）</div>
       <div className="legal-preview">
@@ -132,7 +155,8 @@ export function LegalDemo() {
       </div>
 
       <p className="demo-note">
-        「二月份市场行情波动」被连续序数词规则排除；「三、判令被告支付货款。」因句末断句标点被排除；
+        与行业无关的用法见上方「按场景接入」：售后客服、会议纪要、技术文档都不用这条规则。
+        「二月份市场行情波动」被连续序数词排除；「三、判令被告支付货款。」因句末断句标点被排除；
         章节行仅在其为独立公文层级标题时提升，避免把普通句子误判为标题。
       </p>
 

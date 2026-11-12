@@ -20,7 +20,7 @@ import { Accordion } from './Accordion';
 import { CodeSample } from './CodeSample';
 import { SNIPPETS } from '../data/snippets';
 
-const INITIAL_HTML = `<p>证据清单（拖动列边界调整宽度，或使用按钮操作表格）：</p><table><thead><tr><th>序号</th><th>证据名称</th><th>证明内容</th></tr></thead><tbody><tr><td>1</td><td>《产品购销合同》</td><td>双方买卖合同关系成立</td></tr><tr><td>2</td><td>增值税专用发票</td><td>原告已履行开票义务</td></tr></tbody></table><p>列宽调整使用事务来源 <code>user-table-resize</code>（USER_TABLE_RESIZE_ORIGIN），与 /collab 的人机撤销隔离共用同一份常量。</p>`;
+const INITIAL_HTML = `<p>周会待办清单（拖动列边界调整宽度，或使用按钮操作表格）：</p><table><thead><tr><th>事项</th><th>负责人</th><th>截止</th></tr></thead><tbody><tr><td>结算模块灰度扩量到 20%</td><td>李工</td><td>11-14</td></tr><tr><td>导出慢查询排查</td><td>王小明</td><td>11-18</td></tr></tbody></table><p>列宽调整使用事务来源 <code>user-table-resize</code>（USER_TABLE_RESIZE_ORIGIN），与 /collab 的人机撤销隔离共用同一份常量。</p>`;
 
 export function TiptapDemo() {
   const [html, setHtml] = useState(INITIAL_HTML);

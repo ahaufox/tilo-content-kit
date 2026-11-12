@@ -13,6 +13,7 @@ import { useMemo, useState } from 'react';
 import { MarkdownContent } from '@tilo-ui/content-kit/markdown';
 import { themeStyle } from '@tilo-ui/content-kit/theme';
 import DemoCard from './DemoCard';
+import { Toast, useToast } from './Toast';
 import { Accordion } from './Accordion';
 import { CodeSample } from './CodeSample';
 import { SNIPPETS } from '../data/snippets';
@@ -62,19 +63,20 @@ const BROKEN_PRESET: Record<string, string> = {
   'unknown-key': '#ff0000',
 };
 
-const PREVIEW_DOC = `## 和解协议要点
+const PREVIEW_DOC = `## 本月订阅账单
 
-被告应于 **2026 年 1 月 31 日**前支付 120,000 元，原告不再追究其他责任。
+本期应付 **¥ 1,280.00**，账期 2026-11-01 ~ 11-30。
 
-| 项目 | 金额 |
-| --- | --: |
-| 拖欠货款 | 128,600 元 |
-| 逾期利息 | 2,150 元 |
+| 项目 | 数量 | 金额 |
+| :-- | --: | --: |
+| 团队席位 | 12 | 960.00 |
+| 存储扩容 | 320 GB | 320.00 |
 
 > 本预览由 MarkdownContent 渲染，token 经 themeStyle() 校验后注入本容器。`;
 
 export function ThemeDemo() {
   const [values, setValues] = useState<Record<string, string>>({});
+  const toast = useToast();
 
   const result = useMemo(() => themeStyle(values), [values]);
 
@@ -90,7 +92,10 @@ export function ThemeDemo() {
   const applyPreset = (preset: 'dark' | 'light' | 'broken') => {
     if (preset === 'dark') setValues({ ...DARK_PRESET });
     else if (preset === 'light') setValues({});
-    else setValues({ ...BROKEN_PRESET });
+    else {
+      setValues({ ...BROKEN_PRESET });
+      toast.show('已触发拦截');
+    }
   };
 
   return (
@@ -114,9 +119,12 @@ export function ThemeDemo() {
         <button className="btn" onClick={() => applyPreset('light')}>
           恢复亮色
         </button>
-        <button className="btn" onClick={() => applyPreset('broken')}>
-          注入非法值
-        </button>
+        <span className="toast-anchor">
+          <button className="btn" onClick={() => applyPreset('broken')}>
+            注入非法值
+          </button>
+          <Toast toast={toast.toast} />
+        </span>
       </div>
 
       <div className="token-grid">

@@ -5,6 +5,22 @@
  * 供「核对某一项能力时，打开即看、下方即是参考代码」。
  * 注意：模板字符串内容紧跟反引号、且结尾紧贴闭合反引号，避免首尾出现空行。
  */
+import { CONTENT_KIT_VERSION } from '@tilo-ui/content-kit/theme';
+
+/** 包管理器安装命令：Tab 顺序即展示顺序，默认第一项 */
+export const PACKAGE_MANAGERS = ['pnpm', 'npm', 'yarn'] as const;
+
+export type PackageManager = (typeof PACKAGE_MANAGERS)[number];
+
+const PKG = `@tilo-ui/content-kit@${CONTENT_KIT_VERSION}`;
+
+/** 同一份包名版本，按包管理器给出等价安装命令（StartSection 的 InstallTabs 消费） */
+export const INSTALL_SNIPPETS: Record<PackageManager, string> = {
+  pnpm: `pnpm add ${PKG}`,
+  npm: `npm install ${PKG}`,
+  yarn: `yarn add ${PKG}`,
+};
+
 export const SNIPPETS = {
   start: `import { useState, useEffect } from 'react';
 import { StreamingMarkdown } from '@tilo-ui/content-kit/markdown';

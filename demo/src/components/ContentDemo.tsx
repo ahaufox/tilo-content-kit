@@ -21,23 +21,25 @@ import {
   sanitizeHtml,
 } from '@tilo-ui/content-kit/content';
 import DemoCard from './DemoCard';
+import { SplitPanes } from './SplitPanes';
 import { Accordion } from './Accordion';
 import { CodeSample } from './CodeSample';
 import { SNIPPETS } from '../data/snippets';
 
-const DIRTY_SAMPLE = `<p onclick="steal()">重要通知</p>
+/** 输入样例：一段来自历史工单 / 站内信的脏 HTML，混着脚本与事件属性 */
+const DIRTY_SAMPLE = `<p onclick="steal()">订单 A20261112 已发货</p>
 <script>alert('xss')</script>
 <iframe src="https://evil.example"></iframe>
-<h2>和解协议要点</h2>
-<p>被告应于 2026 年 1 月 31 日前支付 <b>120,000 元</b>。</p>
-<a href="https://example.com/notice">查看原文</a>`;
+<h2>售后处理结果</h2>
+<p>已为您安排 <b>补发坐垫</b>，预计 2 个工作日送达。</p>
+<a href="https://example.com/notice">查看物流</a>`;
 
-/** 列宽算法演示输入：第一行为表头 */
+/** 列宽算法演示输入：第一行为表头（日常订单明细，与行业无关） */
 const TABLE_ROWS: string[][] = [
-  ['序号', '证据名称', '证明内容', '页码'],
-  ['1', '《产品购销合同》', '双方买卖合同关系成立', '3-12'],
-  ['2', '增值税专用发票', '原告已履行开票义务', '13'],
-  ['3', '微信催款记录', '被告确认欠款并承诺付款', '14-20'],
+  ['序号', '商品名称', '处理方式', '时效'],
+  ['1', '人体工学椅', '补发坐垫，运费商家承担', '2 个工作日'],
+  ['2', '升降桌', '上门检修，超时自动退款', '48 小时内'],
+  ['3', '显示器支架', '仅退款，无需寄回', '当日到账'],
 ];
 
 const TABLE_HTML = `<table><thead><tr>${TABLE_ROWS[0]
@@ -96,27 +98,44 @@ export function ContentDemo() {
         ))}
       </div>
 
-      <div className="demo-io">
-        <div className="demo-io-pane">
-          <span className="pane-label">输入（含危险载荷，可编辑）</span>
-          <textarea
-            id="content-input"
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              setSanitized('');
-            }}
-            spellCheck={false}
-            rows={9}
-          />
-        </div>
-        <div className="demo-io-pane">
-          <span className="pane-label">sanitizeHtml 输出</span>
-          <pre className="code-out">
-            {sanitized || '点击「sanitizeHtml 清洗」执行白名单清洗'}
-          </pre>
-        </div>
-      </div>
+      <SplitPanes
+        label="清洗输入输出"
+        panes={[
+          {
+            id: 'input',
+            label: '输入',
+            className: 'demo-io-pane',
+            content: (
+              <>
+                <span className="pane-label">输入（含危险载荷，可编辑）</span>
+                <textarea
+                  id="content-input"
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    setSanitized('');
+                  }}
+                  spellCheck={false}
+                  rows={9}
+                />
+              </>
+            ),
+          },
+          {
+            id: 'output',
+            label: '输出',
+            className: 'demo-io-pane',
+            content: (
+              <>
+                <span className="pane-label">sanitizeHtml 输出</span>
+                <pre className="code-out">
+                  {sanitized || '点击「sanitizeHtml 清洗」执行白名单清洗'}
+                </pre>
+              </>
+            ),
+          },
+        ]}
+      />
       <div className="demo-controls demo-actions">
         <button className="btn primary" onClick={() => setSanitized(sanitizeHtml(input))}>
           sanitizeHtml 清洗

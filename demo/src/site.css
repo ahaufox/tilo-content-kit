@@ -39,6 +39,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* 吸顶导航约 64px 高：锚点定位留出避让距离，标题不会藏到导航下面 */
+  scroll-padding-top: 76px;
 }
 
 body {
@@ -109,6 +111,84 @@ body {
 
 .nav-links a:hover {
   color: var(--site-accent);
+}
+
+/* ── 双端仓库入口（GitHub / CNB），图标用各自品牌色 ──── */
+.repo-links {
+  display: inline-flex;
+  align-items: center;
+}
+
+.repo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.repo-icon {
+  flex: none;
+  display: block;
+}
+
+/* GitHub 本色 #181717，主题底色是暖米色，深灰图标对比度足够、不刺眼 */
+.repo-icon--github {
+  color: #181717;
+}
+
+/* CNB 本色是 #ff6200，纯色在米色底上偏跳，压一点到 #e15200 仍算品牌色 */
+.repo-icon--cnb {
+  color: #e15200;
+}
+
+.repo-links--nav {
+  gap: 16px;
+}
+
+.repo-links--nav .repo-link {
+  color: var(--site-ink-secondary);
+  font-size: 14px;
+}
+
+.repo-links--nav .repo-link:hover {
+  color: var(--site-accent);
+}
+
+.repo-links--nav .repo-link:hover .repo-icon--github {
+  color: #000;
+}
+
+.repo-links--nav .repo-link:hover .repo-icon--cnb {
+  color: #ff6200;
+}
+
+.repo-links--buttons {
+  display: contents;
+}
+
+.repo-links--buttons .repo-btn {
+  gap: 7px;
+}
+
+.repo-links--text {
+  gap: 14px;
+  flex-wrap: wrap;
+  vertical-align: middle;
+}
+
+.repo-links--text .repo-link {
+  color: var(--site-ink-secondary);
+  font-family: var(--site-font-mono);
+  font-size: 12.5px;
+}
+
+.repo-links--text .repo-link:hover {
+  color: var(--site-accent);
+}
+
+.repo-links--scope {
+  margin-left: 4px;
 }
 
 /* ── Hero ─────────────────────────────────────────────── */
@@ -320,6 +400,45 @@ body {
   background: var(--site-surface-low);
 }
 
+/* ── 按场景接入（ScenarioSection） ─────────────────────── */
+.scenario-pane {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scenario-brief {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--site-ink-secondary);
+}
+
+.scenario-steps {
+  margin: 0;
+  padding-left: 1.15em;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--site-ink-secondary);
+}
+
+.scenario-steps li + li {
+  margin-top: 4px;
+}
+
+/* 样例文档：内容排版交给 SDK，这里只做容器边界 */
+.scenario-doc {
+  border: 1px solid var(--site-border);
+  border-radius: 10px;
+  padding: 6px 20px 14px;
+  background: var(--site-surface);
+}
+
+.scenario-pane .code-block {
+  margin-top: 2px;
+}
+
 /* ── 文档面板 ─────────────────────────────────────────── */
 .docs-panel {
   border: 1px solid var(--site-border);
@@ -404,11 +523,23 @@ body {
   padding: 1px 5px;
 }
 
-/* ── 输入输出双栏 ─────────────────────────────────────── */
-.demo-io {
+/* ── 左右对照（SplitPanes：桌面双栏，窄屏 Tabs） ───────── */
+.split-tabs {
+  display: none;
+  padding: 12px 16px 0;
+}
+
+.split-panes {
+  border-bottom: 1px solid var(--site-border);
+}
+
+.split-body {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid var(--site-border);
+}
+
+.split-pane + .split-pane {
+  border-left: 1px solid var(--site-border);
 }
 
 .demo-io-pane {
@@ -418,10 +549,6 @@ body {
   gap: 8px;
 }
 
-.demo-io-pane + .demo-io-pane {
-  border-left: 1px solid var(--site-border);
-}
-
 .pane-label {
   font-size: 11px;
   font-weight: 700;
@@ -429,7 +556,7 @@ body {
   color: var(--site-muted);
 }
 
-.demo-io textarea,
+.split-pane textarea,
 .inline-input {
   width: 100%;
   padding: 10px 12px;
@@ -648,18 +775,8 @@ body {
 }
 
 /* ── 协同双栏 ─────────────────────────────────────────── */
-.collab-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid var(--site-border);
-}
-
 .collab-pane {
   padding: 12px 16px 16px;
-}
-
-.collab-pane + .collab-pane {
-  border-left: 1px solid var(--site-border);
 }
 
 .collab-pane .pane-label {
@@ -779,17 +896,6 @@ body {
     flex-wrap: wrap;
     gap: 12px;
   }
-
-  .demo-io,
-  .collab-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .demo-io-pane + .demo-io-pane,
-  .collab-pane + .collab-pane {
-    border-left: none;
-    border-top: 1px solid var(--site-border);
-  }
 }
 
 /* ── 顶部 kicker / lede（对齐 demo 顶部设计） ── */
@@ -867,6 +973,10 @@ body {
   grid-template-columns: minmax(240px, 0.7fr) minmax(320px, 1.1fr);
   gap: 40px;
   align-items: start;
+}
+/* 网格子项默认 min-width:auto 会被 nowrap 命令撑破版心 */
+.start-grid > * {
+  min-width: 0;
 }
 .code-block {
   background: var(--site-surface-low);
@@ -979,10 +1089,261 @@ body {
   color: inherit;
 }
 
-/* ── 小屏适配（新增区块） ── */
-@media (max-width: 640px) {
+/* ── 平板 / 手机断点（≤ 768px）：左右对照降级为上下 Tabs ── */
+@media (max-width: 768px) {
+  /* 双栏 → Tabs：只显示当前选中栏，边框改由 Tabs 分隔 */
+  .split-body {
+    display: block;
+  }
+
+  .split-tabs {
+    display: flex;
+  }
+
+  .split-pane {
+    display: none;
+  }
+
+  .split-pane.active {
+    display: block;
+  }
+
+  .split-pane + .split-pane {
+    border-left: none;
+  }
+
   .proof-list,
   .start-grid {
     grid-template-columns: 1fr;
   }
+
+  .start-grid {
+    gap: 24px;
+  }
+
+  /* 窄屏下安装命令换行显示，避免命令被截断成需要横向拖动 */
+  .install-command {
+    align-items: flex-start;
+  }
+
+  /* 分段控件在窄屏不折字：整条横向滚动，Tab 文案保持单行 */
+  .demo-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .demo-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .demo-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+/* ── 浮动目录（Toc） ──────────────────────────────────── */
+/* 桌面常驻右上角，不占版心：absolute 挂到视口，滚动时留在原地 */
+.toc {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.toc-toggle {
+  display: inline-flex;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--site-border);
+  background: var(--site-surface);
+  color: var(--site-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(26, 23, 18, 0.12);
+}
+
+.toc-panel {
+  width: 188px;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  padding: 10px 8px 8px;
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius);
+  background: var(--site-surface);
+  box-shadow: 0 10px 32px rgba(26, 23, 18, 0.12);
+}
+
+.toc-title {
+  margin: 0 0 6px;
+  padding: 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--site-muted);
+}
+
+.toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.toc-list a {
+  display: block;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--site-ink-secondary);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+}
+
+.toc-list a:hover {
+  color: var(--site-accent);
+  background: var(--site-surface-low);
+}
+
+.toc-list a[aria-current='location'] {
+  color: var(--site-accent);
+  border-left-color: var(--site-accent);
+  background: var(--site-surface-low);
+  font-weight: 600;
+}
+
+.toc-top {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--site-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--site-ink-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.toc-top:hover {
+  border-color: var(--site-accent);
+  color: var(--site-accent);
+}
+
+/* 宽屏：版心两侧有富余空间，目录常驻展开，「目录」按钮退场 */
+@media (min-width: 1540px) {
+  .toc-toggle {
+    display: none;
+  }
+}
+
+/* ── Toast（按钮旁的短暂反馈气泡） ─────────────────────── */
+.toast-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.toast-slot {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast-bubble {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--site-ink);
+  color: var(--site-surface);
+  font-size: 12px;
+  line-height: 1.5;
+  animation: toast-in 0.16s ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-bubble {
+    animation: none;
+  }
+}
+
+/* ── README 代码块（MarkdownContent 覆盖 code/pre 后） ──── */
+/* .doc-code 替代 SDK 的裸 pre：加一条语言 + 复制操作条 */
+.docs-panel .doc-code {
+  margin: 1em 0;
+  border: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+  border-radius: 12px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.docs-panel .doc-code .code-meta {
+  padding: 6px 10px 6px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 30%, transparent);
+  font-family: var(--site-font-mono);
+}
+
+.docs-panel .doc-code .btn {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+.docs-panel .doc-code pre {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* ── 包管理器安装命令（InstallTabs） ───────────────────── */
+.install-tabs {
+  margin: 0 0 8px;
+}
+
+.install-command {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px 8px 12px;
+  border: 1px solid var(--site-border);
+  border-radius: 8px;
+  background: var(--site-surface-low);
+}
+
+.install-command code {
+  min-width: 0;
+  font-family: var(--site-font-mono);
+  font-size: 12.5px;
+  color: var(--site-ink);
+  overflow-wrap: anywhere;
+}
+
+.install-command .btn {
+  flex: 0 0 auto;
+  background: transparent;
+}
+
+.start-install .demo-tabs {
+  margin-bottom: 8px;
+  background: var(--site-surface-low);
 }

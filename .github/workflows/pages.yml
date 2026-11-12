@@ -46,10 +46,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 构建 SDK 产物
-        run: pnpm --filter @tilo-ui/content-kit build
+        # 根包过滤用 --filter 在 pnpm 10.27 下无法匹配 workspace 根（No projects matched），
+        # 统一使用根级命令，与 ci.yml / .cnb.yml 门禁写法保持一致。
+        run: pnpm build
 
       - name: SDK 测试门禁
-        run: pnpm --filter @tilo-ui/content-kit test
+        run: pnpm test
 
       - name: Demo 站类型检查
         run: pnpm --filter @tilo-ui/content-kit-docs typecheck

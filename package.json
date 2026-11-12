@@ -1,0 +1,148 @@
+{
+  "name": "@tilo-ui/content-kit",
+  "version": "0.6.0",
+  "description": "Tilo 内容渲染与编辑 SDK：Markdown 静态/增量渲染、内容转换、Tiptap 扩展、Yjs 协同",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist",
+    "CHANGELOG.md"
+  ],
+  "exports": {
+    "./content": {
+      "types": "./dist/content.d.ts",
+      "import": "./dist/content.js",
+      "require": "./dist/content.cjs"
+    },
+    "./convert": {
+      "types": "./dist/convert.d.ts",
+      "import": "./dist/convert.js",
+      "require": "./dist/convert.cjs"
+    },
+    "./legal": {
+      "types": "./dist/legal.d.ts",
+      "import": "./dist/legal.js",
+      "require": "./dist/legal.cjs"
+    },
+    "./theme": {
+      "types": "./dist/theme.d.ts",
+      "import": "./dist/theme.js",
+      "require": "./dist/theme.cjs"
+    },
+    "./markdown": {
+      "types": "./dist/markdown.d.ts",
+      "import": "./dist/markdown.js",
+      "require": "./dist/markdown.cjs"
+    },
+    "./tiptap": {
+      "types": "./dist/tiptap.d.ts",
+      "import": "./dist/tiptap.js",
+      "require": "./dist/tiptap.cjs"
+    },
+    "./editor": {
+      "types": "./dist/compat-editor.d.ts",
+      "import": "./dist/compat-editor.js",
+      "require": "./dist/compat-editor.cjs"
+    },
+    "./collab": {
+      "types": "./dist/collab.d.ts",
+      "import": "./dist/collab.js",
+      "require": "./dist/collab.cjs"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "usage": "bash scripts/publish-content-kit.sh --help",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "api:check": "node scripts/api-report.mjs --check",
+    "api:update": "node scripts/api-report.mjs --update",
+    "prepublishOnly": "pnpm build && pnpm test && pnpm typecheck && pnpm api:check"
+  },
+  "publishConfig": {
+    "registry": "https://npm.cnb.cool/tilo-work/tilo-npm-content-kit/-/packages/",
+    "access": "restricted"
+  },
+  "dependencies": {
+    "marked": "^18.1.3",
+    "turndown": "^7.2.5"
+  },
+  "peerDependencies": {
+    "@tiptap/core": ">=3.30.2 <4",
+    "@tiptap/extension-table": ">=3.30.2 <4",
+    "@tiptap/y-tiptap": ">=3.2.0 <4",
+    "prosemirror-model": "^1.25.0",
+    "prosemirror-state": "^1.4.0",
+    "prosemirror-tables": "^1.8.0",
+    "react": "^19.0.0",
+    "react-markdown": "^10.0.0",
+    "remark-gfm": "^4.0.0",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.0"
+  },
+  "peerDependenciesMeta": {
+    "@tiptap/core": {
+      "optional": true
+    },
+    "@tiptap/extension-table": {
+      "optional": true
+    },
+    "@tiptap/y-tiptap": {
+      "optional": true
+    },
+    "prosemirror-model": {
+      "optional": true
+    },
+    "prosemirror-state": {
+      "optional": true
+    },
+    "prosemirror-tables": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-markdown": {
+      "optional": true
+    },
+    "remark-gfm": {
+      "optional": true
+    },
+    "y-websocket": {
+      "optional": true
+    },
+    "yjs": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.0",
+    "@testing-library/react": "^16.3.0",
+    "@tiptap/extension-table": "^3.33.0",
+    "@tiptap/extension-table-row": "^3.33.0",
+    "@tiptap/starter-kit": "^3.33.0",
+    "@tiptap/y-tiptap": "^3.2.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/turndown": "^5.0.6",
+    "jsdom": "^29.1.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  },
+  "packageManager": "pnpm@10.27.0",
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

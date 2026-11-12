@@ -1,0 +1,321 @@
+/* ============================================================================
+ * @tilo-ui/content-kit 样式入口（方案 B：随包 CSS + token 契约）
+ *
+ * 用法：宿主在应用入口 `import '@tilo-ui/content-kit/styles.css'` 一次。
+ *
+ * 主题：所有视觉声明消费 `--tk-*` 变量，缺省值回落到宿主同名变量，因此
+ *   1) 宿主已定义 `--text-main` 等变量时自动继承；
+ *   2) 后端按规则下发 token 时，用 `themeStyle()` 写到容器 style 即可运行时生效，
+ *      不需要重建 CSS（见 /theme 入口）。
+ *
+ * 本文件是排版的唯一事实源：不再依赖 Tailwind utility 或 @tailwindcss/typography，
+ * 因此宿主无需把 @source 指向本包 dist，也不要求宿主启用 typography 插件。
+ * ========================================================================== */
+
+/* ── token 契约（缺省值 = 宿主变量，其次为内置兜底）────────────────────────── */
+:where(.tk-content, .tk-editor) {
+  --tk-text-main: var(--text-main, #1f2328);
+  --tk-text-body: var(--text-body, #374151);
+  --tk-text-muted: var(--text-muted, #6b7280);
+  --tk-bg: var(--bg, #ffffff);
+  --tk-card: var(--card, #ffffff);
+  --tk-border: var(--border, #e5e7eb);
+  --tk-tertiary: var(--tertiary, #2563eb);
+  --tk-surface-low: var(--surface-container-low, #f8fafc);
+  --tk-table-border: var(--tk-border);
+  --tk-radius-block: var(--radius-block, 8px);
+  --tk-radius-chip: var(--radius-chip, 4px);
+  --tk-font-body: var(--font-sans, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif);
+  --tk-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --tk-font-size-body: 0.875rem;
+  --tk-font-size-h1: 1.5rem;
+  --tk-font-size-h2: 1.25rem;
+  --tk-font-size-h3: 1.125rem;
+  --tk-font-size-h4: 1rem;
+  --tk-line-height-body: 1.7;
+  --tk-line-height-heading: 1.35;
+  --tk-table-cell-padding-x: 12px;
+  --tk-table-cell-padding-y: 8px;
+}
+
+/* ── 正文排版基线 ─────────────────────────────────────────────────────────── */
+/* 统一盒模型：表格包裹层带 1px 边框 + width:100%，content-box 会横向溢出 2px */
+.tk-content,
+.tk-content *,
+.tk-content *::before,
+.tk-content *::after {
+  box-sizing: border-box;
+}
+
+.tk-content {
+  font-family: var(--tk-font-body);
+  font-size: var(--tk-font-size-body);
+  line-height: var(--tk-line-height-body);
+  color: var(--tk-text-body);
+  overflow-wrap: break-word;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.tk-content p {
+  margin: 0.75em 0;
+}
+
+.tk-content h1,
+.tk-content h2,
+.tk-content h3,
+.tk-content h4,
+.tk-content h5,
+.tk-content h6 {
+  margin: 1.4em 0 0.6em;
+  color: var(--tk-text-main);
+  font-weight: 600;
+  line-height: var(--tk-line-height-heading);
+}
+
+.tk-content h1 {
+  font-size: var(--tk-font-size-h1);
+}
+
+.tk-content h2 {
+  font-size: var(--tk-font-size-h2);
+}
+
+.tk-content h3 {
+  font-size: var(--tk-font-size-h3);
+}
+
+.tk-content h4,
+.tk-content h5,
+.tk-content h6 {
+  font-size: var(--tk-font-size-h4);
+}
+
+.tk-content > :first-child {
+  margin-top: 0;
+}
+
+.tk-content > :last-child {
+  margin-bottom: 0;
+}
+
+.tk-content strong {
+  color: var(--tk-text-main);
+  font-weight: 600;
+}
+
+.tk-content em {
+  font-style: italic;
+}
+
+.tk-content del {
+  opacity: 0.75;
+}
+
+.tk-content sup,
+.tk-content sub {
+  font-size: 0.75em;
+  line-height: 0;
+}
+
+.tk-content ul,
+.tk-content ol {
+  margin: 0.75em 0;
+  padding-left: 1.4em;
+}
+
+.tk-content ul {
+  list-style: disc;
+}
+
+.tk-content ol {
+  list-style: decimal;
+}
+
+.tk-content li {
+  margin: 0.375em 0;
+}
+
+.tk-content li > p {
+  margin: 0.25em 0;
+}
+
+.tk-content li > ul,
+.tk-content li > ol {
+  margin: 0.25em 0;
+}
+
+.tk-content blockquote {
+  margin: 1em 0;
+  padding: 0.25em 0 0.25em 1em;
+  border-left: 3px solid var(--tk-border);
+  color: var(--tk-text-muted);
+}
+
+.tk-content hr {
+  margin: 1.75em 0;
+  border: 0;
+  border-top: 1px solid var(--tk-border);
+}
+
+.tk-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--tk-radius-block);
+}
+
+/* ── 表格 ──────────────────────────────────────────────────────────────────── */
+.tk-content .tk-table-wrap {
+  margin: 12px 0;
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--tk-radius-block);
+  border: 1px solid color-mix(in srgb, var(--tk-border) 60%, transparent);
+  background: var(--tk-card);
+}
+
+.tk-content table,
+.tk-editor table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  text-align: left;
+  font-size: 0.75rem;
+}
+
+.tk-content thead,
+.tk-editor thead {
+  background: var(--tk-surface-low);
+  color: var(--tk-text-main);
+  font-weight: 600;
+}
+
+.tk-content thead tr,
+.tk-editor thead tr {
+  border-bottom: 1px solid color-mix(in srgb, var(--tk-border) 60%, transparent);
+}
+
+.tk-content tbody tr {
+  border-bottom: 1px solid color-mix(in srgb, var(--tk-border) 40%, transparent);
+  transition: background-color 0.15s ease;
+}
+
+.tk-content tbody tr:hover {
+  background: color-mix(in srgb, var(--tk-surface-low) 40%, transparent);
+}
+
+.tk-content tbody,
+.tk-editor tbody {
+  color: var(--tk-text-body);
+}
+
+.tk-content th,
+.tk-editor th {
+  padding: var(--tk-table-cell-padding-y) var(--tk-table-cell-padding-x);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--tk-text-main);
+  border-right: 1px solid color-mix(in srgb, var(--tk-border) 40%, transparent);
+  white-space: nowrap;
+}
+
+.tk-content td,
+.tk-editor td {
+  padding: var(--tk-table-cell-padding-y) var(--tk-table-cell-padding-x);
+  font-size: 0.75rem;
+  color: var(--tk-text-body);
+  border-right: 1px solid color-mix(in srgb, var(--tk-border) 40%, transparent);
+}
+
+.tk-content th:last-child,
+.tk-content td:last-child,
+.tk-editor th:last-child,
+.tk-editor td:last-child {
+  border-right: 0;
+}
+
+/* 表格列宽以 <colgroup><col width> 为准，不用 width:100% 覆盖列组 */
+.tk-content colgroup,
+.tk-editor colgroup {
+  width: auto;
+}
+
+/* ── 代码 ──────────────────────────────────────────────────────────────────── */
+.tk-content :not(pre) > code {
+  border-radius: var(--tk-radius-chip);
+  background: var(--tk-bg);
+  padding: 2px 4px;
+  font-size: 0.8em;
+  font-family: var(--tk-font-mono);
+  color: var(--tk-text-main);
+  border: 1px solid color-mix(in srgb, var(--tk-border) 30%, transparent);
+}
+
+.tk-content pre {
+  margin: 1em 0;
+  overflow-x: auto;
+  border-radius: 12px;
+  background: var(--tk-bg);
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--tk-border) 40%, transparent);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  font-family: var(--tk-font-mono);
+}
+
+.tk-content pre code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* ── 链接 ──────────────────────────────────────────────────────────────────── */
+.tk-content a {
+  color: var(--tk-tertiary);
+  text-decoration: none;
+}
+
+.tk-content a:hover {
+  text-decoration: underline;
+}
+
+/* ── 流式光标 ──────────────────────────────────────────────────────────────── */
+.tk-cursor {
+  display: inline-block;
+  width: 2px;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  color: var(--tk-text-main);
+  animation: tk-cursor-blink 1s steps(2, start) infinite;
+}
+
+@keyframes tk-cursor-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* ── L2 预置变体（后端只能选择，不能自定义）────────────────────────────────── */
+.tk-content--compact {
+  --tk-line-height-body: 1.5;
+  --tk-table-cell-padding-y: 4px;
+}
+
+.tk-content--letterhead {
+  padding-top: 8mm;
+}
+
+/* ── 编辑态：版心收敛（可选开启）────────────────────────────────────────────
+ * 原实现无条件覆盖 .ProseMirror 宽度与左右内边距（!important），用于抵消宿主
+ * CustomPagination 写入的内联固定宽。该补丁属于宿主排版决策，故改为显式类，
+ * 由宿主在需要时添加到编辑器容器上；不加则完全不影响宿主自身样式。 */
+.tk-editor--flush-width .ProseMirror {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}

@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Public API Report Check",
+      "trigger": "PostFileSave",
+      "description": "监听 SDK 源码变更，自动校验公共 API 报告是否漂移",
+      "matcher": "\\.(ts|tsx)$",
+      "action": {
+        "type": "agent",
+        "prompt": "内容 SDK 源码已变更。请运行 `pnpm api:check` 校验公共 API 报告（api/*.api.md）是否漂移；若存在差异，运行 `pnpm api:update` 更新快照并说明变更影响面，随后运行 `pnpm typecheck` 与 `pnpm test` 确认无回归。"
+      }
+    }
+  ]
+}

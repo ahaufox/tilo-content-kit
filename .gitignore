@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.npmrc
+.npmrc.temp
+.publish-state
+*.tsbuildinfo
+
+# Kiro 工作区配置（参赛要求：根目录必须包含 .kiro 且不得被忽略）
+# 切勿在下方添加 .kiro 或 .kiro/ 忽略规则
+!.kiro/

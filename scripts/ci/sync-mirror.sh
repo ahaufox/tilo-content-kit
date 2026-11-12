@@ -11,6 +11,8 @@
 #   SYNC_BRANCH    要同步的分支名；与 SYNC_TAG 至少填一个。
 #   SYNC_TAG       要同步的标签名；与 SYNC_BRANCH 至少填一个。
 #
+# 前置鉴权：先用一个必然不存在的 ref 探测目标端，凭据被拒时立刻以可诊断的信息退出。
+#           否则 401 会被下游 ls_remote 吞成「ref 不存在」，报错只剩 git 的 terminal prompts disabled。
 # 防回环：先比对目标端 ref 的 commit SHA，一致就不推送；对端不会因此产生 push 事件，
 #         所以「A 推 B → B 回推 A」链路在第二次必然收敛。
 # 凭据安全：http(s) 目标通过单次 git 命令的 http.extraheader 传 Basic 认证，
@@ -30,11 +32,28 @@ if [ -z "$SYNC_BRANCH" ] && [ -z "$SYNC_TAG" ]; then
 fi
 
 AUTH_B64=""
+TOKEN_SHAPE=""
 case "$SYNC_TARGET" in
   https://*|http://*)
     : "${SYNC_AUTH_USER:?SYNC_AUTH_USER 未设置（https 目标仓必填）}"
     : "${SYNC_TOKEN:?SYNC_TOKEN 未设置（CI 密钥未注入）}"
+    # 密钥文件用块标量或多行写法时，令牌末尾常带换行；拼进 Basic 凭据照样「合法」，但目标端只会回 401。
+    # 这里裁掉首尾空白并显式告知，避免把配置问题查成令牌过期。
+    TRIMMED_TOKEN="$(printf '%s' "$SYNC_TOKEN" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    if [ -z "$TRIMMED_TOKEN" ]; then
+      echo "ERROR: SYNC_TOKEN 去掉空白后为空" >&2
+      exit 1
+    fi
+    if [ "$TRIMMED_TOKEN" != "$SYNC_TOKEN" ]; then
+      echo ">> SYNC_TOKEN 含首尾空白或换行，已自动裁剪（常见于密钥文件多行写法）" >&2
+    fi
+    SYNC_TOKEN="$TRIMMED_TOKEN"
     AUTH_B64="$(printf '%s:%s' "$SYNC_AUTH_USER" "$SYNC_TOKEN" | base64 | tr -d '\n')"
+    case "$SYNC_TOKEN" in
+      ghp_*) TOKEN_SHAPE="经典 PAT（ghp_ 前缀）" ;;
+      github_pat_*) TOKEN_SHAPE="细粒度 PAT（github_pat_ 前缀）" ;;
+      *) TOKEN_SHAPE="非 GitHub PAT 常见前缀，确认密钥是否贴错" ;;
+    esac
     ;;
   /*|file://*) ;;
   *)
@@ -57,9 +76,30 @@ git remote remove "$REMOTE" >/dev/null 2>&1 || true
 git remote add "$REMOTE" "$SYNC_TARGET"
 export GIT_TERMINAL_PROMPT=0
 
+# 探测目标端：必然不存在的 ref 在「可达且有权限」时返回 0 且无输出，非 0 即鉴权被拒或网络不可达。
+probe_remote() {
+  local detail
+  if ! detail="$(run_git ls-remote "$REMOTE" refs/cnb-mirror-probe/probe 2>&1)"; then
+    {
+      if [ -n "$AUTH_B64" ]; then
+        echo "ERROR: 无法访问 ${SYNC_TARGET}：目标端拒绝鉴权或网络不可达。"
+        echo "       排查项：SYNC_TOKEN 是否过期、是否对目标仓有写权限、SYNC_AUTH_USER 是否与令牌类型匹配。"
+        echo "       令牌形态：${#SYNC_TOKEN} 字符，${TOKEN_SHAPE}（仅供定位配置问题，不输出令牌内容）"
+      else
+        echo "ERROR: 无法访问 ${SYNC_TARGET}：目标仓不存在或不可达。"
+      fi
+      echo "       目标端返回："
+      printf '%s\n' "$detail" | sed 's/^/         /'
+    } >&2
+    exit 1
+  fi
+}
+
 ls_remote() {
   run_git ls-remote "$REMOTE" "$1" 2>/dev/null || true
 }
+
+probe_remote
 
 if [ -n "$SYNC_BRANCH" ]; then
   LOCAL_SHA="$(git rev-parse HEAD)"

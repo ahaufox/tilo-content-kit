@@ -1,0 +1,103 @@
+# .cnb.yml — tilo-content-kit（CNB: tilo-work/tilo-content-kit）
+#
+# 与 GitHub 侧 .github/workflows 组成双向镜像：
+#   - PR / push：跑与 GitHub Actions 一致的质量门禁；
+#   - push：把当前分支同步到 GitHub 镜像仓 ahaufox/tilo-content-kit；
+#   - tag_push：把当前 Tag 同步到 GitHub。
+# 同步执行层统一为 scripts/ci/sync-mirror.sh，按 commit SHA 幂等跳过，避免两侧互推回环。
+#
+# 密钥：从密钥仓 github.yml 注入 GITHUB_TOKEN（需具备 ahaufox/tilo-content-kit 写权限）。
+#       env 优先于 imports，目标仓坐标由本文件的 SYNC_TARGET 固定，不使用密钥仓的 GITHUB_REPO。
+
+"**":
+  pull_request:
+    - name: content-kit-ci-gate
+      docker:
+        image: node:22
+      stages:
+        - name: 安装 pnpm
+          script: |
+            set -e
+            command -v pnpm >/dev/null 2>&1 || npm install -g pnpm@10.27.0
+            pnpm config set update-notifier false
+        - name: 安装依赖
+          script: pnpm install --frozen-lockfile
+        - name: 构建
+          script: pnpm build
+        - name: 类型检查
+          script: pnpm typecheck
+        - name: 单元测试
+          script: pnpm test
+        - name: 公共 API 快照校验
+          script: pnpm api:check
+        - name: Demo 站构建校验
+          script: |
+            set -e
+            if [ -f demo/package.json ]; then
+              VITE_PAGES_BASE=/tilo-content-kit/ pnpm --filter @tilo-ui/content-kit-docs build
+            else
+              echo ">> demo/ 尚未入库，跳过 Demo 站构建"
+            fi
+
+  push:
+    - name: content-kit-ci-gate
+      docker:
+        image: node:22
+      stages:
+        - name: 安装 pnpm
+          script: |
+            set -e
+            command -v pnpm >/dev/null 2>&1 || npm install -g pnpm@10.27.0
+            pnpm config set update-notifier false
+        - name: 安装依赖
+          script: pnpm install --frozen-lockfile
+        - name: 构建
+          script: pnpm build
+        - name: 类型检查
+          script: pnpm typecheck
+        - name: 单元测试
+          script: pnpm test
+        - name: 公共 API 快照校验
+          script: pnpm api:check
+        - name: Demo 站构建校验
+          script: |
+            set -e
+            if [ -f demo/package.json ]; then
+              VITE_PAGES_BASE=/tilo-content-kit/ pnpm --filter @tilo-ui/content-kit-docs build
+            else
+              echo ">> demo/ 尚未入库，跳过 Demo 站构建"
+            fi
+
+    - name: sync-to-github
+      docker:
+        image: node:22
+      env:
+        SYNC_TARGET: https://github.com/ahaufox/tilo-content-kit.git
+        SYNC_AUTH_USER: x-access-token
+      imports:
+        - https://cnb.cool/tilo-work/keys/-/blob/main/github.yml
+      stages:
+        - name: 同步当前分支到 GitHub
+          script: |
+            set -e
+            export SYNC_TOKEN="${GITHUB_TOKEN:?GITHUB_TOKEN 未注入：检查密钥仓 github.yml 的可见性与令牌权限}"
+            export SYNC_BRANCH="$CNB_BRANCH"
+            bash scripts/ci/sync-mirror.sh
+
+$:
+  tag_push:
+    - name: sync-tag-to-github
+      docker:
+        image: node:22
+      env:
+        SYNC_TARGET: https://github.com/ahaufox/tilo-content-kit.git
+        SYNC_AUTH_USER: x-access-token
+      imports:
+        - https://cnb.cool/tilo-work/keys/-/blob/main/github.yml
+      stages:
+        - name: 同步当前 Tag 到 GitHub
+          script: |
+            set -e
+            export SYNC_TOKEN="${GITHUB_TOKEN:?GITHUB_TOKEN 未注入：检查密钥仓 github.yml 的可见性与令牌权限}"
+            export SYNC_TAG="$CNB_BRANCH"
+            bash scripts/ci/sync-mirror.sh

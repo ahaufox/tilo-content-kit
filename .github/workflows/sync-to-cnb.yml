@@ -1,0 +1,35 @@
+name: 同步到 CNB
+
+# GitHub → CNB：任意分支 push 与 Tag push 都把当前 ref 推到 CNB 镜像仓。
+# 反向同步由 CNB 侧 .cnb.yml 完成；两侧共用 scripts/ci/sync-mirror.sh，
+# 目标端 commit SHA 一致时跳过推送，避免互推形成回环。
+#
+# 前置条件：GitHub 仓库需配置 Secret CNB_TOKEN（对 tilo-work/tilo-content-kit 有写权限）。
+# 仅监听 push（不监听 fork PR），未配置密钥的 fork 不会触发同步。
+on:
+  push:
+    branches: ['**']
+    tags: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync-to-cnb:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码（含完整 ref）
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 同步当前分支 / Tag 到 CNB
+        env:
+          SYNC_TARGET: https://cnb.cool/tilo-work/tilo-content-kit.git
+          SYNC_AUTH_USER: cnb
+          SYNC_TOKEN: ${{ secrets.CNB_TOKEN }}
+          SYNC_BRANCH: ${{ github.ref_type == 'branch' && github.ref_name || '' }}
+          SYNC_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: bash scripts/ci/sync-mirror.sh

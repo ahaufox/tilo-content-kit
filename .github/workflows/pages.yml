@@ -1,0 +1,80 @@
+name: 部署文档 / Demo 站到 GitHub Pages
+
+# 站点源码在 demo/（docs/ 只放说明文档，不放可运行代码）。
+# 构建 demo/ 根工程，产物 demo/dist 发布到 https://ahaufox.github.io/tilo-content-kit/。
+# 仅 GitHub 侧执行：CNB 镜像仓不部署 Pages，避免两处发布产物互相覆盖。
+# 前置条件：仓库 Settings → Pages → Build and deployment → Source 选 GitHub Actions。
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'demo/**'
+      - 'src/**'
+      - 'README.md'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v5
+
+      - name: 安装 pnpm（读取 packageManager 字段）
+        uses: pnpm/action-setup@v4
+
+      - name: 安装 Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建 SDK 产物
+        run: pnpm --filter @tilo-ui/content-kit build
+
+      - name: SDK 测试门禁
+        run: pnpm --filter @tilo-ui/content-kit test
+
+      - name: Demo 站类型检查
+        run: pnpm --filter @tilo-ui/content-kit-docs typecheck
+
+      - name: 构建 Demo 站（注入 Pages 子路径 base）
+        run: pnpm --filter @tilo-ui/content-kit-docs build
+        env:
+          VITE_PAGES_BASE: /tilo-content-kit/
+
+      - name: 配置 Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上传站点产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: demo/dist
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

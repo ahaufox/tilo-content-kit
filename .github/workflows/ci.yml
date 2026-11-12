@@ -1,0 +1,56 @@
+name: CI
+
+# GitHub 侧质量门禁；CNB 侧 .cnb.yml 跑同一组命令。
+# 门禁命令与 package.json scripts 一一对应，不要在流水线里另写一套。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-kit-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v5
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+
+      - name: 安装 Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建
+        run: pnpm build
+
+      - name: 类型检查
+        run: pnpm typecheck
+
+      - name: 单元测试
+        run: pnpm test
+
+      - name: 公共 API 快照校验
+        run: pnpm api:check
+
+      - name: Demo 站构建校验
+        if: hashFiles('demo/package.json') != ''
+        env:
+          VITE_PAGES_BASE: /tilo-content-kit/
+        run: pnpm --filter @tilo-ui/content-kit-docs build

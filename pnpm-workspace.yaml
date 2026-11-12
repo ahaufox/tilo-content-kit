@@ -1,5 +1,7 @@
 packages:
   - .
+  - demo
+  - demo/tilo-content-kit-demo
 
 allowBuilds:
   esbuild: true

@@ -1,0 +1,65 @@
+name: 需求申请
+description: 提交新功能、新组件或 SDK 能力需求的建议
+title: "[需求][P2][模块名]"
+labels: ["功能需求"]
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: 所属模块
+      description: 请选择该需求所属的 SDK 模块
+      options:
+        - "模块/markdown"
+        - "模块/convert"
+        - "模块/tiptap"
+        - "模块/collab"
+        - "模块/theme"
+        - "模块/legal"
+        - "模块/文档站"
+        - "构建 CI"
+        - "其他/跨模块"
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      description: 请选择该需求的优先级
+      options:
+        - "P0"
+        - "P1"
+        - "P2"
+        - "P3"
+    validations:
+      required: true
+  - type: textarea
+    id: background
+    attributes:
+      label: 💡 需求背景&来源
+      description: 请描述为什么要添加这个新功能，它能解决什么痛点或带来什么业务价值。
+      placeholder: 请在此处输入...
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: ⚙️ 功能描述
+      description: 请详细描述新功能的设计方案或 API 行为表现，包括具体的使用场景、期望的调用方式与输出（越具体越好）。
+      placeholder: 请在此处输入...
+    validations:
+      required: true
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: 👥 场景用例
+      description: 请提供一到两个具体的调用场景或用例（附示例代码更佳）。
+      placeholder: 请在此处输入...
+    validations:
+      required: false
+  - type: textarea
+    id: extra
+    attributes:
+      label: 🔗 补充信息
+      description: 如有任何相关的参考实现、竞品 API 或技术实现思路，请在这里补充。
+    validations:
+      required: false

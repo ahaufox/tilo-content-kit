@@ -1,0 +1,13 @@
+# .github/ISSUE_TEMPLATE/config.yml —— Issue 模板选择页配置
+# 详见 https://docs.github.com/communities/using-templates-to-encourage-useful-issues-in-your-repository/configuring-issue-templates-for-your-repository
+
+# 允许创建空白 Issue（保留灵活性，便于紧急记录）
+blank_issues_enabled: true
+
+contact_links:
+  - name: 📖 在线文档站
+    url: https://ahaufox.github.io/tilo-content-kit/
+    about: 组件用法、API 说明与 Demo 演示
+  - name: 💬 项目 README
+    url: https://github.com/ahaufox/tilo-content-kit#readme
+    about: 安装方式、快速上手与模块总览

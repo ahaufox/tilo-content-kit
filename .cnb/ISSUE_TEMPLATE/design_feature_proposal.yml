@@ -1,0 +1,78 @@
+name: UI与UX交互建议
+description: 提出关于组件视觉与界面交互的方案和改进
+title: "[UI与UX交互][P2][模块名]"
+labels: ["设计交互", "功能需求"]
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: 所属模块
+      description: 请选择该方案所属的 SDK 模块
+      options:
+        - "模块/markdown"
+        - "模块/convert"
+        - "模块/tiptap"
+        - "模块/collab"
+        - "模块/theme"
+        - "模块/legal"
+        - "模块/文档站"
+        - "构建 CI"
+        - "其他/跨模块"
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      description: 请选择该方案的优先级
+      options:
+        - "P0"
+        - "P1"
+        - "P2"
+        - "P3"
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: 提案概述
+      description: 请一句话简述这个提案的核心目的和预期达到的效果。
+      placeholder: 请在此处输入...
+    validations:
+      required: true
+  - type: textarea
+    id: value
+    attributes:
+      label: 设计意图与用户价值
+      description: 1. 该设计/功能解决什么核心痛点？ 2. 对最终用户有什么直接的价值或体验提升？
+      placeholder: |
+        1. 
+        2. 
+    validations:
+      required: true
+  - type: textarea
+    id: ui-details
+    attributes:
+      label: 🎨 界面与交互设计
+      description: 请描述界面排版、设计风格或交互动效方面的要求（可附带原型图、视觉草图等）。
+      placeholder: 请在此处输入...
+    validations:
+      required: true
+  - type: textarea
+    id: logic-flow
+    attributes:
+      label: ⚙️ 功能逻辑与核心流程
+      description: 1. 功能的核心业务逻辑是什么？ 2. 用户的操作步骤/系统的数据流转是怎样的？
+      placeholder: |
+        1. 
+        2. 
+    validations:
+      required: false
+  - type: textarea
+    id: impact
+    attributes:
+      label: ⚠️ 依赖关系与影响范围
+      description: 该提案是否影响已有 API、组件或构建产物？若有，请说明。
+      placeholder: 请在此处输入...
+    validations:
+      required: false

@@ -1,0 +1,68 @@
+name: 优化建议
+description: 提出关于代码质量、性能优化、体验提升或重构的建议
+title: "[优化][P2][模块名]"
+labels: ["优化重构"]
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: 所属模块
+      description: 请选择该优化所属的 SDK 模块
+      options:
+        - "模块/markdown"
+        - "模块/convert"
+        - "模块/tiptap"
+        - "模块/collab"
+        - "模块/theme"
+        - "模块/legal"
+        - "模块/文档站"
+        - "构建 CI"
+        - "其他/跨模块"
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      description: 请选择该优化的优先级
+      options:
+        - "P0"
+        - "P1"
+        - "P2"
+        - "P3"
+    validations:
+      required: true
+  - type: checkboxes
+    id: types
+    attributes:
+      label: 优化类型
+      options:
+        - label: 性能优化（渲染/转换耗时、包体积）
+        - label: 使用体验（API 易用性、文档清晰度等）
+        - label: 安全加固
+        - label: 代码重构（如消除重复代码、提升可读性等）
+        - label: 监控与日志
+  - type: textarea
+    id: current-state
+    attributes:
+      label: 现状分析
+      description: 请描述当前实现存在的问题、痛点或性能瓶颈。
+      placeholder: 请在此处输入...
+    validations:
+      required: true
+  - type: textarea
+    id: goals
+    attributes:
+      label: 🎯 优化目标
+      description: 预期的优化效果或量化指标。
+      placeholder: 请在此处输入...
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: 🛠️ 优化方案
+      description: 具体的重构或改进方案。
+      placeholder: 请在此处输入...
+    validations:
+      required: true

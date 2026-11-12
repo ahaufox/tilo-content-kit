@@ -1,0 +1,13 @@
+# .cnb/ISSUE_TEMPLATE/config.yml —— Issue 模板选择页配置
+# 详见 https://docs.cnb.cool/zh/repo/issue-template.md
+
+# 允许创建空白 Issue（保留灵活性，便于紧急记录）
+blank_issues_enabled: true
+
+contact_links:
+  - name: 📖 CNB Issue 模板规范
+    url: https://docs.cnb.cool/zh/repo/issue-template.md
+    about: 模板配置方式、支持的组件类型与填写限制
+  - name: 🤖 唤醒 NPC 处理 Issue
+    url: https://docs.cnb.cool/zh/build/npc.md
+    about: NPC 触发方式、工作模式（替我上班）与权限说明

@@ -1,0 +1,105 @@
+name: 小需求（轻量改动）
+description: 文档更新、文案修改、配置微调等改动小、链路短的轻量需求
+title: "[小需求][P3][模块名]"
+labels: ["优化重构"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > **适用范围**：改动小、链路短、无需架构评审的轻量需求。
+        > 例如：**更新文档**、**修改某个文案**、**调整配置项**、**补一个链接**、**小范围样式微调**。
+        >
+        > **不适用**：涉及公开 API、组件契约、核心渲染链路重构、跨模块功能设计的需求，
+        > 请改用「需求申请」或「优化建议」模板走完整评审流程。
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 一句话目标
+
+        请用**一句话**说清要做什么，以及做完后是什么样。
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: 🎯 一句话目标
+      description: 一件事、一句话。避免堆叠多个诉求（多个诉求请拆成多个 Issue）。
+      placeholder: 例：把 README 的安装命令示例改为 pnpm 优先。
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 所属模块
+      description: 请选择该需求所属的 SDK 模块
+      options:
+        - "模块/markdown"
+        - "模块/convert"
+        - "模块/tiptap"
+        - "模块/collab"
+        - "模块/theme"
+        - "模块/legal"
+        - "模块/文档站"
+        - "构建 CI"
+        - "其他/跨模块"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 需求类型
+      description: 用于快速判定处理路径
+      options:
+        - "文档更新（README / docs / 文档站等）"
+        - "文案修改（界面文字、提示语、报错信息）"
+        - "配置调整（CI / 环境 / 依赖 / 模板）"
+        - "小范围样式与交互微调"
+        - "其他轻量改动"
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: 📍 改动位置
+      description: 越精确越好：文件路径、组件名、或截图标注。不确定可留空，由处理者自行检索。
+      placeholder: |
+        - 文件：src/markdown/xxx.ts
+        - 页面：demo 的 xxx 面板
+        - 或粘贴截图
+    validations:
+      required: false
+
+  - type: textarea
+    id: detail
+    attributes:
+      label: 📝 具体要求
+      description: 具体改成什么。文案类需求请给出**准确的最终文字**，避免二次猜测。
+      placeholder: |
+        现状：
+        期望：
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: ✅ 验收标准
+      description: 怎样算完成？一条一行，便于自检与关闭 Issue。
+      placeholder: |
+        - [ ] 文案已替换，无残留旧文案
+        - [ ] 相关测试通过
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: scope-confirm
+    attributes:
+      label: 轻量性自查
+      options:
+        - label: 改动范围小且边界清晰，不涉及公开 API、组件契约与核心渲染链路变更
+          required: true
+        - label: 已确认这不是 Bug（Bug 请用「Bug 提交」模板）
+          required: true

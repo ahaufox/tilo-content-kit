@@ -1,0 +1,130 @@
+name: 小需求（NPC 直办）
+description: 文档更新、文案修改、配置微调等轻量需求，填写后直接交由 CNB NPC 自动处理
+title: "[小需求][P3][模块名]"
+labels: ["优化重构"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > **适用范围**：改动小、链路短、无需架构评审的轻量需求。
+        > 例如：**更新文档**、**修改某个文案**、**调整配置项**、**补一个链接**、**小范围样式微调**。
+        >
+        > **不适用**：涉及公开 API、组件契约、核心渲染链路重构、跨模块功能设计的需求，
+        > 请改用「需求申请」或「优化建议」模板走完整评审流程。
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 一句话目标
+
+        请用**一句话**说清要做什么，以及做完后是什么样。
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: 🎯 一句话目标
+      description: 一件事、一句话。避免堆叠多个诉求（多个诉求请拆成多个 Issue）。
+      placeholder: 例：把 README 的安装命令示例改为 pnpm 优先。
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 所属模块
+      description: 请选择该需求所属的 SDK 模块
+      options:
+        - "模块/markdown"
+        - "模块/convert"
+        - "模块/tiptap"
+        - "模块/collab"
+        - "模块/theme"
+        - "模块/legal"
+        - "模块/文档站"
+        - "构建 CI"
+        - "其他/跨模块"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 需求类型
+      description: 用于快速判定 NPC 的处理路径
+      options:
+        - "文档更新（README / docs / 文档站等）"
+        - "文案修改（界面文字、提示语、报错信息）"
+        - "配置调整（CI / 环境 / 依赖 / 模板）"
+        - "小范围样式与交互微调"
+        - "其他轻量改动"
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: 📍 改动位置
+      description: 越精确越好：文件路径、组件名、或截图标注。不确定可留空，由 NPC 自行检索。
+      placeholder: |
+        - 文件：src/markdown/xxx.ts
+        - 页面：demo 的 xxx 面板
+        - 或粘贴截图
+    validations:
+      required: false
+
+  - type: textarea
+    id: detail
+    attributes:
+      label: 📝 具体要求
+      description: 具体改成什么。文案类需求请给出**准确的最终文字**，避免 NPC 二次猜测。
+      placeholder: |
+        现状：
+        期望：
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: ✅ 验收标准
+      description: 怎样算完成？一条一行，便于 NPC 自检与关闭 Issue。
+      placeholder: |
+        - [ ] 文案已替换，无残留旧文案
+        - [ ] 相关测试通过
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: scope-confirm
+    attributes:
+      label: 轻量性自查
+      description: 勾选确认后，本 Issue 将直接交由 NPC 自动执行
+      options:
+        - label: 改动范围小且边界清晰，不涉及公开 API、组件契约与核心渲染链路变更
+          required: true
+        - label: 已确认这不是 Bug（Bug 请用「Bug 提交」模板）
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+
+        ## 🤖 交给 NPC 处理
+
+        下方已预置 NPC 召唤语句。**保持它独立成段、不要放进列表或代码块**，否则不会触发 NPC 事件。
+
+        - 需要 NPC 直接改代码并提 PR：评论时勾选 **`替我上班`**（工作模式）
+        - 只做分析、不改代码：保持默认
+
+        提交后若未自动触发，可在评论中再次 `@CodeBuddy` 唤醒。
+
+  - type: textarea
+    id: npc-trigger
+    attributes:
+      label: NPC 召唤语句
+      description: 保留默认内容即可。也可在仓库内配置自定义 NPC 角色后替换。
+      value: |
+        @CodeBuddy 请按本 Issue 的「一句话目标」与「具体要求」完成这个轻量需求，改动尽量小、只碰必要文件，完成后提交 PR 并在此回复变更说明（改了哪些文件、如何验收）。
+    validations:
+      required: false

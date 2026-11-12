@@ -1,0 +1,72 @@
+name: Bug 提交
+description: 提交 SDK 缺陷、非预期行为或错误
+title: "[Bug][P1][模块名]"
+labels: ["缺陷"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您提交 Bug！请尽可能提供详细的信息，帮助我们快速定位和解决问题。
+  - type: dropdown
+    id: module
+    attributes:
+      label: 所属模块
+      description: 请选择此问题所属的 SDK 模块
+      options:
+        - "模块/markdown"
+        - "模块/convert"
+        - "模块/tiptap"
+        - "模块/collab"
+        - "模块/theme"
+        - "模块/legal"
+        - "模块/文档站"
+        - "构建 CI"
+        - "其他/跨模块"
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      description: 请评估该 Bug 的严重程度与优先级
+      options:
+        - "P0"
+        - "P1"
+        - "P2"
+        - "P3"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 🐛 Bug 描述 (Describe the bug)
+      description: 请用清晰简洁的语言描述您遇到的问题。
+      placeholder: 请在此处输入...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 🔄 重现步骤 (To Reproduce)
+      description: 请提供重现该问题的详细步骤（包括包版本、调用的 API / 组件等）。
+      placeholder: |
+        1. 包与版本（如 @tilo-ui/content-kit@0.6.0）：
+        2. 调用的 API / 组件：
+        3. 表现/错误：
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 💡 预期行为 (Expected behavior)
+      description: 请描述您期望正常运行时的结果。
+      placeholder: 请在此处输入...
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots-logs
+    attributes:
+      label: 📸 截图或日志 (Screenshots / Logs)
+      description: 如果可能，请添加报错截图、控制台输出或复现环境（浏览器/构建工具/Node 版本）信息。
+    validations:
+      required: false

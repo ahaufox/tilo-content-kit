@@ -1,0 +1,85 @@
+# .github/labels.yml —— tilo-content-kit 标签规范
+# 由 .github/workflows/sync_labels.yml 在 push 到 main 时自动同步至 GitHub
+# 结构与色值沿用主仓 .github/labels.yml，板块维度替换为 SDK 模块维度
+
+# ── 类型标签 ─────────────────────────────────────────────
+
+- name: "缺陷"
+  color: "d73a4a"
+  description: "系统缺陷、非预期行为或错误的报告"
+
+- name: "功能需求"
+  color: "a2eeef"
+  description: "SDK 功能逻辑与 API 能力需求"
+
+- name: "优化重构"
+  color: "2563eb"
+  description: "代码重构、结构优化与技术债清理"
+
+- name: "体验提升"
+  color: "a855f7"
+  description: "现有 API 或使用体验的微调与改进"
+
+- name: "设计交互"
+  color: "facc15"
+  description: "组件视觉与交互动效设计需求（偏前端展现与交互体验）"
+
+- name: "方案提案"
+  color: "c084fc"
+  description: "功能需求的系统性、中长期技术方案提案"
+
+- name: "文档"
+  color: "0075ca"
+  description: "README、docs 与文档站内容更新"
+
+# ── 模块标签 ─────────────────────────────────────────────
+
+- name: "模块/markdown"
+  color: "eab308"
+  description: "Markdown 解析与静态/增量渲染"
+
+- name: "模块/convert"
+  color: "f97316"
+  description: "内容格式转换（docx / html 等）"
+
+- name: "模块/tiptap"
+  color: "a855f7"
+  description: "Tiptap 富文本编辑扩展"
+
+- name: "模块/collab"
+  color: "3b82f6"
+  description: "Yjs 协同编辑"
+
+- name: "模块/theme"
+  color: "8b5cf6"
+  description: "主题令牌与样式"
+
+- name: "模块/legal"
+  color: "22c55e"
+  description: "法律文本增强（法条、案由等）"
+
+- name: "模块/文档站"
+  color: "eab308"
+  description: "文档站与 Demo 展示站点"
+
+- name: "构建 CI"
+  color: "ef4444"
+  description: "构建、测试、发布流水线"
+
+# ── 优先级标签 ───────────────────────────────────────────
+
+- name: "P0"
+  color: "d73a4a"
+  description: "阻塞级/最高优先级（构建失败、核心渲染崩溃等）"
+
+- name: "P1"
+  color: "e67e22"
+  description: "严重级/高优先级（核心 API 异常、关键功能受阻等）"
+
+- name: "P2"
+  color: "f1c40f"
+  description: "普通级/中优先级（普通功能异常、渲染样式问题等）"
+
+- name: "P3"
+  color: "94a3b8"
+  description: "优化级/低优先级（次要体验优化、测试/文档遗留问题等）"

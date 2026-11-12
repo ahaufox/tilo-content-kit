@@ -1,0 +1,27 @@
+name: 同步标签配置
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/labels.yml'
+      - '.github/workflows/sync_labels.yml'
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  sync:
+    if: ${{ github.actor != 'nektos/act' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v5
+
+      - name: 同步标签
+        uses: micahzg/github-label-sync-action@v1
+        with:
+          manifest: '.github/labels.yml'
+          token: ${{ secrets.GITHUB_TOKEN }}

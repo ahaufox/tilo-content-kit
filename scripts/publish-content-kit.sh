@@ -22,6 +22,11 @@ cd "$SDK_DIR"
 PACKAGE_NAME=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).name)")
 SCOPE="${PACKAGE_NAME%%/*}"
 REGISTRY_URL=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).publishConfig?.registry || '')")
+# 制品仓库名由主仓 scripts/sdk/content-kit-env.sh 统一约定（CONTENT_KIT_NPM_REPO）。
+# CI 若显式给出完整 URL 则优先，改名时无需改动本脚本。
+if [ -n "${CONTENT_KIT_NPM_REGISTRY:-}" ]; then
+  REGISTRY_URL="$CONTENT_KIT_NPM_REGISTRY"
+fi
 
 # 凭据变量名按优先级排列；环境变量探测与 .env 探测共用这一份清单。
 TOKEN_VARS=(CNB_TOKEN CNB_NPM_TOKEN NPM_TOKEN TILO_REGISTRY_TOKEN)
@@ -42,6 +47,10 @@ usage() {
   包名 / 当前版本      package.json 的 name / version
   发布目标 registry    package.json 的 publishConfig.registry
                      当前值: ${REGISTRY_URL}
+                     env CONTENT_KIT_NPM_REGISTRY 可覆盖（由主仓
+                     scripts/sdk/content-kit-env.sh 从 CONTENT_KIT_NPM_REPO 派生）
+  约定版本            env CONTENT_KIT_VERSION，缺省时回退 SDK package.json；
+                     与本次发布版本不一致时中止，避免发出无人安装的版本
   凭据变量（按优先级） ${TOKEN_VARS[*]}
   凭据来源             上述环境变量，或工作区各级 .env / .env.local
   私有源权限           由制品库侧授权决定，脚本不内置任何令牌
@@ -79,6 +88,14 @@ fi
 
 CURRENT_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).version)")
 RESOLVED_VERSION="${TARGET_VERSION:-$CURRENT_VERSION}"
+
+# 版本由 env 约定（CONTENT_KIT_VERSION）。若 env 与本次发布版本不一致，说明消费方
+# 锁定的版本与即将发布的包会漂移，宁可中止也不发一个没人安装的版本。
+if [ -n "${CONTENT_KIT_VERSION:-}" ] && [ "$CONTENT_KIT_VERSION" != "$RESOLVED_VERSION" ]; then
+  echo "✘ CONTENT_KIT_VERSION=${CONTENT_KIT_VERSION} 与本次发布版本 ${RESOLVED_VERSION} 不一致，发布中止"
+  echo "   请先同步 .env / .env.example 与 package.json，或显式传 --version"
+  exit 1
+fi
 
 # CHANGELOG 门禁：每个对外版本必须有人写的变更说明（迁移/兼容信息无法由 commit 自动生成）。
 # 必须在写回 package.json / version.ts 之前校验，避免中止时留下未发布的版本号。

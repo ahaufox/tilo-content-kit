@@ -34,6 +34,7 @@
 - 构建开启 `splitting`：各入口不再各自内联一份共享实现（remark 插件、版本常量、分类函数）。
 - `README` 增加"入口 × 必需 peer"契约表、目录与依赖方向、API 快照与 CHANGELOG 维护流程、适用范围声明。
 
+- **运维变更（不影响包内容）**：CNB npm 制品仓库由 `tilo-content-kit` 改名为 `tilo-npm-content-kit`（git 仓库占用原名），历史版本 0.1.0–0.6.0 全部保留。发布目标与消费侧坐标统一由主仓 `CONTENT_KIT_NPM_REPO` / `CONTENT_KIT_VERSION` 约定，经 `scripts/sdk/sync-content-kit.sh` 派生同步到 `publishConfig`、各前端仓 `.npmrc`、CI/Docker 与 lockfile；不再逐处硬编码仓库名。
 ### 修复
 
 - `/markdown` 默认主题移除非法 utility `prose-p:text-[var(--text-base)]`：`--text-base` 是字号 token，生成的 `color` 声明无效，且与 `prose-p:text-[var(--text-body)]` 同属性冲突。

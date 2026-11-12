@@ -26,6 +26,15 @@
 
 在宿主仓 `.npmrc` 中按制品库页面给出的配置，添加对应 scope 的 registry 与 authToken；凭据通过环境变量注入，不要写进仓库。本包自身不携带 `.npmrc`。CI 与容器构建同样需要注入该凭据，由宿主仓的流水线与镜像构建负责。
 
+**制品仓库坐标不要写死在多处**：CNB 上的 git 仓库与 npm 制品仓库不能同名，制品仓库名为 `tilo-npm-content-kit`（git 侧占用 `tilo-content-kit`）。主仓 `.env` 的 `CONTENT_KIT_NPM_REPO` / `CONTENT_KIT_VERSION` 是唯一约定，改名或升版后执行：
+
+```bash
+bash scripts/sdk/sync-content-kit.sh          # 同步 SDK publishConfig、两个前端仓 .npmrc、CI/Docker 兜底值、lockfile tarball URL、消费方版本
+bash scripts/sdk/sync-content-kit.sh --check  # CI 门禁：存在未同步配置即失败
+```
+
+`scripts/sdk/content-kit-env.sh` 可被 `source`，向发布脚本与流水线提供派生好的 `CONTENT_KIT_NPM_REGISTRY` 与认证键；发布脚本会校验 `CONTENT_KIT_VERSION` 与本次发布版本一致，避免发出无人安装的版本。
+
 ### 2.2 安装
 
 ```bash
@@ -169,7 +178,7 @@ bash scripts/publish-content-kit.sh --version=<version>  # 指定版本
 - **CHANGELOG 门禁**：`CHANGELOG.md` 缺少 `## [<当前版本>]` 段落时发布中止；`--version=` 只同步 `package.json` 与 `src/version.ts`，变更说明需人工补写。
 - **幂等**：目标版本已存在于制品库时默认跳过（`--force` 强制）。因此 tag 推送不会再因"版本未变"把流水线打红。
 - 版本遵循 SemVer 只增不覆盖；凭据只存在于临时文件（包目录之外），进程退出即清理，日志始终脱敏。
-- 顶层仓 CI 在 tag 推送时调用同一脚本，无需手工传参；本地与 CI 共用同一份配置源。
+- 顶层仓 CI 在 tag 推送时先 `source scripts/sdk/content-kit-env.sh` 再调用同一脚本，无需手工传参；本地与 CI 共用同一份配置源。
 
 ## 5. 能力边界
 

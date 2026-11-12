@@ -21,7 +21,10 @@ jobs:
         uses: actions/checkout@v5
 
       - name: 同步标签
-        uses: micahzg/github-label-sync-action@v1
+        # 注：主仓引用的 micahzg/github-label-sync-action 已 404 失效，统一改用 micnncim/action-label-syncer
+        uses: micnncim/action-label-syncer@v1.3.0
         with:
           manifest: '.github/labels.yml'
           token: ${{ secrets.GITHUB_TOKEN }}
+          # 删除清单外的失管标签（清理 GitHub 默认英文标签，收敛到中文标签体系）
+          prune: true

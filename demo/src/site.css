@@ -57,21 +57,24 @@ body {
 }
 
 /* ── 导航 ─────────────────────────────────────────────── */
-/* 导航栏：底色与正文一致（奶油底）；外框参考展示站 doc-frame 的纸张窗口边框 */
+/* 导航栏：全宽覆盖整个屏幕；底色与正文一致（奶油底）；内容在 max-width 内与正文对齐 */
 .nav {
   position: sticky;
   top: 0;
   z-index: 10;
+  width: 100%;
+  background: var(--site-bg);
+  border-bottom: 1px solid var(--site-border);
+  box-shadow: 0 1px 2px rgba(26, 23, 18, 0.05), 0 8px 24px rgba(26, 23, 18, 0.06);
+}
+.nav-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 12px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 16px;
-  background: var(--site-bg);
-  border: 0px solid var(--site-border);
-  border-radius: 10px;
-  box-shadow: 0 0px 2px rgba(26, 23, 18, 0.05), 0 8px 24px rgba(26, 23, 18, 0.06);
-  margin-bottom: 16px;
 }
 
 .nav-brand {
@@ -476,6 +479,41 @@ body {
   margin: 8px 16px;
 }
 
+/* 表格列宽算法实时渲染预览 */
+.table-preview-wrap {
+  margin: 4px 16px 16px;
+}
+.table-preview {
+  overflow-x: auto;
+  border: 1px solid var(--site-border);
+  border-radius: 10px;
+  background: var(--site-surface);
+  padding: 12px;
+}
+.table-preview table {
+  table-layout: fixed;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+.table-preview th,
+.table-preview td {
+  border: 1px solid var(--site-border);
+  padding: 8px 10px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.table-preview th {
+  background: var(--site-surface-low);
+  font-weight: 600;
+  color: var(--site-ink);
+}
+.table-preview td {
+  color: var(--site-ink-secondary);
+}
+
 /* ── 判定 chips / 拒绝项 ──────────────────────────────── */
 .chips {
   display: flex;
@@ -732,6 +770,11 @@ body {
     flex-wrap: wrap;
   }
 
+  .nav-inner {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
   .nav-links {
     flex-wrap: wrap;
     gap: 12px;
@@ -890,7 +933,7 @@ body {
   text-align: left;
   background: none;
   border: 0;
-  padding: 20px 0;
+  padding: 20px 16px;
   font: inherit;
   font-weight: 400;
   cursor: pointer;
@@ -918,7 +961,7 @@ body {
   color: var(--site-accent);
 }
 .acc-panel {
-  padding: 0 0 28px;
+  padding: 0 16px 28px;
 }
 
 /* ── 范围与边界 ── */

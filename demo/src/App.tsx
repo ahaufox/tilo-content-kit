@@ -35,23 +35,26 @@ const ENTRIES = [
 
 export function App() {
   return (
-    <div className="site">
+    <>
       <header className="nav">
-        <a className="nav-brand" href="#top">
-          <span className="nav-name">@tilo-ui/content-kit</span>
-          <span className="nav-version">v{CONTENT_KIT_VERSION}</span>
-        </a>
-        <nav className="nav-links">
-          <a href="#proof">能力证据</a>
-          <a href="#start">开发接入</a>
-          <a href="#docs">文档</a>
-          <a href={REPO_URL} target="_blank" rel="noreferrer">
-            GitHub
+        <div className="nav-inner">
+          <a className="nav-brand" href="#top">
+            <span className="nav-name">@tilo-ui/content-kit</span>
+            <span className="nav-version">v{CONTENT_KIT_VERSION}</span>
           </a>
-        </nav>
+          <nav className="nav-links">
+            <a href="#proof">能力证据</a>
+            <a href="#start">开发接入</a>
+            <a href="#docs">文档</a>
+            <a href={REPO_URL} target="_blank" rel="noreferrer">
+              GitHub
+            </a>
+          </nav>
+        </div>
       </header>
 
-      <main id="top">
+      <div className="site">
+        <main id="top">
         <section className="hero">
           <p className="kicker">@tilo-ui/content-kit v{CONTENT_KIT_VERSION}</p>
           <h1>
@@ -120,7 +123,8 @@ export function App() {
 
         <BoundsSection />
       </main>
-    </div>
+      </div>
+    </>
   );
 }
 

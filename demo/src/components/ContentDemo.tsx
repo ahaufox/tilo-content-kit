@@ -144,6 +144,36 @@ export function ContentDemo() {
           </span>
         ))}
       </div>
+
+      <div className="table-preview-wrap">
+        <span className="pane-label">渲染预览（列宽随总宽度实时变化）</span>
+        <div className="table-preview" style={{ width: totalWidth, maxWidth: '100%' }}>
+          <table style={{ tableLayout: 'fixed', width: '100%', borderCollapse: 'collapse' }}>
+            <colgroup>
+              {widths.map((w, i) => (
+                <col key={i} style={{ width: w }} />
+              ))}
+            </colgroup>
+            <thead>
+              <tr>
+                {TABLE_ROWS[0].map((c, i) => (
+                  <th key={i}>{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {TABLE_ROWS.slice(1).map((row, ri) => (
+                <tr key={ri}>
+                  {row.map((c, ci) => (
+                    <td key={ci}>{c}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <pre className="code-out demo-code-inline">{injectedHtml}</pre>
 
       <p className="demo-note">

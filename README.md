@@ -1,17 +1,17 @@
 # @tilo-ui/content-kit
 
-> Tilo 内容渲染与编辑 SDK —— 把 Markdown 渲染、HTML⇄Markdown 转换、Tiptap 表格、Yjs 协同与法律文书规则，做成可复用的开源积木。
+> 为 AI Agent 前端而生的内容渲染与编辑 SDK —— 把 SSE 流式 Markdown 渲染、HTML⇄Markdown 转换、Tiptap 表格、Yjs 协同与法律文书规则，做成可复用的开源积木。
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![types](https://img.shields.io/badge/types-TypeScript-3178c6.svg)](#)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](../../issues)
 
-一套**按需引入、零捆绑**的前端内容能力库：你只取自己要的那一块，其余不会进包。它脱胎于真实的法律文书生产系统，但核心层与具体产品解耦，可独立用于任何需要富内容渲染 / 编辑的场景。
+一套**按需引入、零捆绑**的前端内容能力库：你只取自己要的那一块，其余不会进包。它脱胎于真实的法律文书生产系统，**核心面向 AI Agent 相关前端**——尤其擅长对接后端 SSE 流式输出，边收边渲染，把 token 流实时变成可用内容。核心层与具体产品解耦，也可独立用于任何需要富内容渲染 / 编辑的场景。
 
 ## ✨ 特性
 
 - 🧩 **多入口、按需引入**：`/content` `/convert` `/legal` `/markdown` `/tiptap` `/collab` `/theme`，各入口彼此独立。
-- 📝 **统一 Markdown 渲染**：静态与流式（增量）渲染同源，一套实现两种状态。
+- 🌊 **SSE 流式 Markdown 渲染**：为 AI Agent 后端的 SSE 输出而生，静态与增量（流式）渲染同源，边收边渲染，零闪烁。
 - 🔁 **HTML ⇄ Markdown 双向转换**：`marked` + `turndown` 只在真正需要时引入。
 - 📐 **Tiptap 表格扩展**：可持久化列宽 + 工具，不止于默认表格。
 - 🤝 **Yjs 协同基座**：隔离撤销栈、awareness；连接与鉴权由宿主注入。
@@ -25,7 +25,7 @@
 pnpm add @tilo-ui/content-kit@<version>
 ```
 
-> 包发布在私有 registry，消费方需配置对应 scope 的 registry 与凭据（凭据走环境变量，不进仓库）。源码公开托管于 GitHub，欢迎 fork 与贡献。
+> 包发布在公开 registry（CNB 公有源）：`https://npm.cnb.cool/tilo-work/tilo-npm-content-kit/-/packages/`，安装即用，无需私有凭据。源码公开托管于 GitHub，欢迎 fork 与贡献。
 
 React / Tiptap / Yjs 等由宿主提供（`peerDependencies`），SDK 不打包它们——同一应用内需保证单一版本实例。
 
@@ -57,6 +57,38 @@ const { style } = themeStyle(profile.tokens);
 | `styles.css` | 随包样式，全部消费 `--tk-*`，宿主可覆盖 |
 
 > `/editor` 是 `/tiptap` 的过渡别名（已标记 `@deprecated`，1.0 移除），新代码请用 `/tiptap`。
+
+## 🌊 SSE 流式对接
+
+本 SDK 的核心场景是 **AI Agent 前端**：后端通过 SSE / 流式接口持续推送增量 token，前端用 `StreamingMarkdown` 边收边渲染，无需等整段生成完。
+
+```tsx
+import { useState, useEffect } from 'react';
+import { StreamingMarkdown } from '@tilo-ui/content-kit/markdown';
+
+// 对接 AI Agent 后端的流式响应，把增量片段累积进 state，流式渲染
+function AgentReply({ body }: { body: ReadableStream<Uint8Array> }) {
+  const [text, setText] = useState('');
+  useEffect(() => {
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    (async () => {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        setText(buf);
+      }
+    })();
+    return () => reader.cancel();
+  }, [body]);
+  return <StreamingMarkdown content={text} />;
+}
+```
+
+- `StreamingMarkdown` 与静态的 `MarkdownContent` **同源渲染**：共用同一套 remark 插件与主题样式，不会因流式 / 静态切换而样式或行为漂移。
+- 业务专属逻辑（引用锚点、法律归一化预处理）由宿主在二者之上叠加，SDK 不内嵌产品规则。
 
 ## 🤝 参与开发
 

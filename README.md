@@ -107,7 +107,7 @@ pnpm typecheck
 ```
 
 - 本地预览：`pnpm dev`
-- 目录约定：`docs/` 只放说明文档；文档 / Demo 站源码在 `demo/`（Pages 产物 `demo/dist`），独立展示站在 `demo/tilo-content-kit-demo/`。
+- 目录约定：`docs/` 只放说明文档；文档 / Demo 站源码在 `demo/`（Pages 产物 `demo/dist`）。
 - 公共 API 面由 `api/*.api.md` 快照固守，`pnpm api:check` 校验导出是否漂移；有意变更先 `pnpm api:update`。
 - 想认领任务？关注仓库 issue（标记 `good first issue` 的更适合起步），或来讨论设计。
 - 提交前请阅读 `CONTRIBUTING.md` 与行为准则，保持 PR 小而聚焦。

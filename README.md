@@ -5,6 +5,9 @@
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![types](https://img.shields.io/badge/types-TypeScript-3178c6.svg)](#)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](../../issues)
+[![docs](https://img.shields.io/badge/docs-在线文档与Demo-d4a017.svg)](https://ahaufox.github.io/tilo-content-kit/)
+
+📖 **在线文档与交互式 Demo**：<https://ahaufox.github.io/tilo-content-kit/>（含 SSE 流式渲染实时演示，文档站本身即由本 SDK 渲染）
 
 一套**按需引入、零捆绑**的前端内容能力库：你只取自己要的那一块，其余不会进包。它脱胎于真实的法律文书生产系统，**核心面向 AI Agent 相关前端**——尤其擅长对接后端 SSE 流式输出，边收边渲染，把 token 流实时变成可用内容。核心层与具体产品解耦，也可独立用于任何需要富内容渲染 / 编辑的场景。
 
@@ -104,6 +107,7 @@ pnpm typecheck
 ```
 
 - 本地预览：`pnpm dev`
+- 目录约定：`docs/` 只放说明文档；文档 / Demo 站源码在 `demo/`（Pages 产物 `demo/dist`），独立展示站在 `demo/tilo-content-kit-demo/`。
 - 公共 API 面由 `api/*.api.md` 快照固守，`pnpm api:check` 校验导出是否漂移；有意变更先 `pnpm api:update`。
 - 想认领任务？关注仓库 issue（标记 `good first issue` 的更适合起步），或来讨论设计。
 - 提交前请阅读 `CONTRIBUTING.md` 与行为准则，保持 PR 小而聚焦。

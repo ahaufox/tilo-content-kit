@@ -44,6 +44,7 @@ export const THEME_TOKENS = {
   card: { kind: 'color', description: '卡片/表头底色' },
   border: { kind: 'color', description: '分割线与边框色' },
   tertiary: { kind: 'color', description: '链接色' },
+  'surface-low': { kind: 'color', description: '低阶表面色（表头底 / 隔行底混合基色）' },
   'table-border': { kind: 'color', description: '表格边框色' },
   'radius-block': { kind: 'length', description: '块级圆角' },
   'radius-chip': { kind: 'length', description: '行内容器圆角' },

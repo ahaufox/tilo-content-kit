@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   DEFAULT_MODIFIERS,
   modifierClassNames,
   pickModifiers,
   themeStyle,
+  THEME_TOKENS,
+  type ThemeTokenKey,
 } from '../src/theme';
 
 describe('themeStyle — 后端配置驱动的 token 校验', () => {
@@ -75,6 +79,35 @@ describe('themeStyle — 后端配置驱动的 token 校验', () => {
     const { applied, rejected } = themeStyle({ 'text-main': null, 'text-body': '' });
     expect(applied).toEqual([]);
     expect(rejected).toEqual([]);
+  });
+
+  it('surface-low 表面色键可用（表头底 / 隔行底混合基色）', () => {
+    const { style, applied, rejected } = themeStyle({ 'surface-low': '#1b2540' });
+    expect(rejected).toEqual([]);
+    expect(style).toEqual({ '--tk-surface-low': '#1b2540' });
+    expect(applied).toEqual(['surface-low']);
+  });
+
+  it('CSS 契约：token 缺省声明位于 :root, :host，不在内容元素上再声明', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/styles/index.css'), 'utf8');
+    // 缺省块必须声明在 :root/:host，保证 themeStyle() 的祖先注入按继承生效
+    const rootBlock = css.match(/:root,\s*:host\s*\{([^}]*)\}/);
+    expect(rootBlock).not.toBeNull();
+    expect(rootBlock?.[1]).toContain('--tk-text-main:');
+    expect(rootBlock?.[1]).toContain('--tk-surface-low:');
+    // 严禁回到 .tk-content/.tk-editor 上再声明（会遮蔽祖先注入）
+    expect(css).not.toMatch(/:where\(\.tk-content,\s*\.tk-editor\)/);
+  });
+
+  it('CSS 契约：白名单全部 token 在 index.css 中均有真实消费点（防死键门禁）', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/styles/index.css'), 'utf8');
+    // 消费点判定：必须以 var(--tk-<key>) / var(--tk-<key>,… 形式被使用；
+    // :root 中的缺省声明行（--tk-<key>: …）不算消费——历史上 --tk-font-body、
+    // --tk-table-border 等仅有声明而无消费，后端下发后静默无效。
+    const dead = (Object.keys(THEME_TOKENS) as ThemeTokenKey[]).filter(
+      (key) => !css.includes(`var(--tk-${key})`) && !css.includes(`var(--tk-${key},`),
+    );
+    expect(dead).toEqual([]);
   });
 
   it('非对象入参安全降级', () => {

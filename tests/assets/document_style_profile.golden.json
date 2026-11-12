@@ -1,0 +1,82 @@
+{
+  "note": "T022 跨语言 golden fixture：Python(tillo_export.document_style_profile) 与 TS(@tilo-ui/content-kit/theme) 必须产生完全相同的 profile。修改任一实现都要同步本文件。",
+  "cases": [
+    {
+      "name": "标准设置（snake_case DB JSON）",
+      "settings": {
+        "font_family": "微软雅黑",
+        "body_font_size_pt": 11.0,
+        "margin_left_mm": 31.8,
+        "margin_top_mm": 25.4
+      },
+      "options": {},
+      "expected": {
+        "profile_id": "doc-template",
+        "version": 1,
+        "tokens": {
+          "font-family-body": "微软雅黑",
+          "font-family-heading": "微软雅黑",
+          "font-size-body": "11pt",
+          "page-padding-x": "31.8mm",
+          "page-padding-y": "25.4mm"
+        },
+        "modifiers": []
+      }
+    },
+    {
+      "name": "司法公文设置（camelCase API 响应 + 自定义 id/version）",
+      "settings": {
+        "fontFamily": "仿宋_GB2312",
+        "bodyFontSizePt": 16,
+        "marginLeftMm": 15,
+        "marginTopMm": 15
+      },
+      "options": {
+        "profileId": "court-complaint",
+        "profile_id": "court-complaint",
+        "version": 3
+      },
+      "expected": {
+        "profile_id": "court-complaint",
+        "version": 3,
+        "tokens": {
+          "font-family-body": "仿宋_GB2312",
+          "font-family-heading": "仿宋_GB2312",
+          "font-size-body": "16pt",
+          "page-padding-x": "15mm",
+          "page-padding-y": "15mm"
+        },
+        "modifiers": []
+      }
+    },
+    {
+      "name": "非法/缺失字段被省略，不填臆造默认值",
+      "settings": {
+        "font_family": "宋体",
+        "body_font_size_pt": "not-a-number",
+        "margin_left_mm": -5
+      },
+      "options": {},
+      "expected": {
+        "profile_id": "doc-template",
+        "version": 1,
+        "tokens": {
+          "font-family-body": "宋体",
+          "font-family-heading": "宋体"
+        },
+        "modifiers": []
+      }
+    },
+    {
+      "name": "空设置返回空规则档",
+      "settings": null,
+      "options": {},
+      "expected": {
+        "profile_id": "doc-template",
+        "version": 1,
+        "tokens": {},
+        "modifiers": []
+      }
+    }
+  ]
+}

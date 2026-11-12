@@ -2,7 +2,7 @@
 
 > 自动生成，请勿手改。刷新：`pnpm api:update`。校验：`pnpm api:check`。
 
-<!-- 类型摘要 sha256:ca46bee1dd0f1507 -->
+<!-- 类型摘要 sha256:df8bc765ad9d5296 -->
 
 ## 运行时导出符号
 
@@ -101,6 +101,10 @@ declare const THEME_TOKENS: {
     readonly tertiary: {
         readonly kind: "color";
         readonly description: "链接色";
+    };
+    readonly 'surface-low': {
+        readonly kind: "color";
+        readonly description: "低阶表面色（表头底 / 隔行底混合基色）";
     };
     readonly 'table-border': {
         readonly kind: "color";
@@ -234,7 +238,8 @@ declare function applyProfile(profile: DocumentStyleProfile): AppliedProfile;
  * 从同一个输入推导，避免两边各自硬编码字号/页边距。
  *
  * 与 `sdks/tilo-export/src/tilo_export/document_style_profile.py` 逐字段对齐；
- * 任何一侧改动必须同步 `tests/fixtures/document_style_profile.golden.json`
+ * 任何一侧改动必须同步两份黄金夹具（本仓 `tests/assets/document_style_profile.golden.json`
+ * 与 tilo-export 侧 `tests/fixtures/document_style_profile.golden.json`，两份逐字节一致）
  * 并跑两侧测试（TS: `theme-document-template.spec.ts`，Python: `test_document_style_profile.py`）。
  *
  * 注意：本函数只做形状与类型归一化，**不重复** CSS 注入校验——值是否安全由

@@ -1,8 +1,11 @@
 /**
  * T022：后端文书模板设置 → 前端规则档的跨语言同构校验
  *
- * 基准样例与 Python 侧共用 `sdks/tilo-export/tests/fixtures/document_style_profile.golden.json`。
- * 两侧实现必须产出完全相同的 profile；任何一侧改动都会被这个测试拦下。
+ * 基准样例为本仓副本 `tests/assets/document_style_profile.golden.json`，
+ * 与 Python 侧 `sdks/tilo-export/tests/fixtures/document_style_profile.golden.json`
+ * 内容逐字节同源（本仓测试独立可跑，不依赖兄弟仓检出）。
+ * 两侧实现必须产出完全相同的 profile；任何一侧改动（实现或夹具）都必须
+ * 同步更新两份夹具并跑两侧测试，否则会被本测试或 Python 侧测试拦下。
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -22,10 +25,7 @@ interface GoldenCase {
 }
 
 const fixture = JSON.parse(
-  readFileSync(
-    resolve(process.cwd(), '../tilo-export/tests/fixtures/document_style_profile.golden.json'),
-    'utf8',
-  ),
+  readFileSync(resolve(process.cwd(), 'tests/assets/document_style_profile.golden.json'), 'utf8'),
 ) as { cases: GoldenCase[] };
 
 describe('profileFromDocumentTemplate — 与 Python 同构', () => {

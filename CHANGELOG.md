@@ -8,6 +8,17 @@
 - 发布门禁：`scripts/publish-content-kit.sh` 校验当前版本段落存在，缺失即中止发布。
 - 公共 API 面的机器可读快照见 `api/*.api.md`（`pnpm api:check` 校验）。
 
+## [未发布]
+
+### 修复
+
+- **随包 CSS token 消费契约修复（`styles.css`）**：
+  - token 缺省声明从内容元素上移到 `:root, :host`，避免元素自身声明遮蔽 `themeStyle()` 在祖先容器注入的运行时主题（Shadow DOM 场景由 `:host` 接管）。
+  - 补齐白名单死键的真实消费点：`font-family-body` / `font-family-heading`（替换旧名 `--tk-font-body`，正文与 h1–h6 分别消费，旧键无源码级消费方）；`page-padding-x` / `page-padding-y`（`.tk-content` 版心 `padding`，缺省 0 外观不变，`letterhead` 预设变体继续优先）；`table-border`（表格 5 处 color-mix 边框基色，缺省与 `--tk-border` 一致外观不变）。
+  - `surface-low` 补入白名单（表头底 / 隔行底混合基色）。
+  - `tests/theme.spec.ts` 新增防死键门禁：`THEME_TOKENS` 全键必须存在 `var(--tk-*)` 真实消费点，缺省声明不再被误判为消费。
+- **黄金夹具本仓化**：`theme-document-template.spec.ts` 改读本仓 `tests/assets/document_style_profile.golden.json`（与 tilo-export 侧 `tests/fixtures/` 逐字节一致），消除对兄弟仓检出的隐式依赖（独立 clone 时模块顶层 `readFileSync` 无守卫会导致整套测试崩溃）；跨语言同构门禁保持全量 4 用例不弱化。
+
 ## [0.6.0] - 2026-11-11
 
 ### 新增

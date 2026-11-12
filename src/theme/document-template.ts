@@ -8,7 +8,8 @@
  * 从同一个输入推导，避免两边各自硬编码字号/页边距。
  *
  * 与 `sdks/tilo-export/src/tilo_export/document_style_profile.py` 逐字段对齐；
- * 任何一侧改动必须同步 `tests/fixtures/document_style_profile.golden.json`
+ * 任何一侧改动必须同步两份黄金夹具（本仓 `tests/assets/document_style_profile.golden.json`
+ * 与 tilo-export 侧 `tests/fixtures/document_style_profile.golden.json`，两份逐字节一致）
  * 并跑两侧测试（TS: `theme-document-template.spec.ts`，Python: `test_document_style_profile.py`）。
  *
  * 注意：本函数只做形状与类型归一化，**不重复** CSS 注入校验——值是否安全由

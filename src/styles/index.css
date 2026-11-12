@@ -13,7 +13,13 @@
  * ========================================================================== */
 
 /* ── token 契约（缺省值 = 宿主变量，其次为内置兜底）────────────────────────── */
-:where(.tk-content, .tk-editor) {
+/* 声明上移到 :root, :host（而非 .tk-content/.tk-editor 自身再声明）：
+   若在内容元素上声明缺省值，元素自身的声明会遮蔽祖先节点（如 themeStyle()
+   注入的包裹容器 style）下发的 --tk-* 值，导致运行时主题失效。上移后，
+   宿主与 themeStyle() 的注入按继承自然生效，本块仅充当兜底缺省值；
+   Shadow DOM 场景由 :host 接管。 */
+:root,
+:host {
   --tk-text-main: var(--text-main, #1f2328);
   --tk-text-body: var(--text-body, #374151);
   --tk-text-muted: var(--text-muted, #6b7280);
@@ -22,10 +28,16 @@
   --tk-border: var(--border, #e5e7eb);
   --tk-tertiary: var(--tertiary, #2563eb);
   --tk-surface-low: var(--surface-container-low, #f8fafc);
+  /* 表格边框基色（供表格 5 处 color-mix 使用）；缺省与通用边框一致，外观零变化 */
   --tk-table-border: var(--tk-border);
   --tk-radius-block: var(--radius-block, 8px);
   --tk-radius-chip: var(--radius-chip, 4px);
-  --tk-font-body: var(--font-sans, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif);
+  /* 字体族（白名单键 font-family-body / font-family-heading）。
+     两条缺省链相互独立（heading 先回落到宿主 --font-heading 再到 --font-sans），
+     不用 var(--tk-font-family-body) 级联：:root 上声明的 var 链在计算时即固化，
+     themeStyle() 在包裹容器上覆盖正文后标题不会跟随，须依赖后端成对下发。 */
+  --tk-font-family-body: var(--font-sans, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif);
+  --tk-font-family-heading: var(--font-heading, var(--font-sans, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif));
   --tk-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   --tk-font-size-body: 0.875rem;
   --tk-font-size-h1: 1.5rem;
@@ -34,6 +46,10 @@
   --tk-font-size-h4: 1rem;
   --tk-line-height-body: 1.7;
   --tk-line-height-heading: 1.35;
+  /* 版心（打印）：缺省 0 保证现有外观不变，消费点在 .tk-content；
+     后端按文书模板页边距（document-template.ts）运行时下发后生效 */
+  --tk-page-padding-x: 0;
+  --tk-page-padding-y: 0;
   --tk-table-cell-padding-x: 12px;
   --tk-table-cell-padding-y: 8px;
 }
@@ -48,7 +64,8 @@
 }
 
 .tk-content {
-  font-family: var(--tk-font-body);
+  padding: var(--tk-page-padding-y) var(--tk-page-padding-x);
+  font-family: var(--tk-font-family-body);
   font-size: var(--tk-font-size-body);
   line-height: var(--tk-line-height-body);
   color: var(--tk-text-body);
@@ -70,6 +87,7 @@
   margin: 1.4em 0 0.6em;
   color: var(--tk-text-main);
   font-weight: 600;
+  font-family: var(--tk-font-family-heading);
   line-height: var(--tk-line-height-heading);
 }
 
@@ -170,7 +188,7 @@
   width: 100%;
   overflow-x: auto;
   border-radius: var(--tk-radius-block);
-  border: 1px solid color-mix(in srgb, var(--tk-border) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tk-table-border) 60%, transparent);
   background: var(--tk-card);
 }
 
@@ -193,11 +211,11 @@
 
 .tk-content thead tr,
 .tk-editor thead tr {
-  border-bottom: 1px solid color-mix(in srgb, var(--tk-border) 60%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--tk-table-border) 60%, transparent);
 }
 
 .tk-content tbody tr {
-  border-bottom: 1px solid color-mix(in srgb, var(--tk-border) 40%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--tk-table-border) 40%, transparent);
   transition: background-color 0.15s ease;
 }
 
@@ -216,7 +234,7 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--tk-text-main);
-  border-right: 1px solid color-mix(in srgb, var(--tk-border) 40%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--tk-table-border) 40%, transparent);
   white-space: nowrap;
 }
 
@@ -225,7 +243,7 @@
   padding: var(--tk-table-cell-padding-y) var(--tk-table-cell-padding-x);
   font-size: 0.75rem;
   color: var(--tk-text-body);
-  border-right: 1px solid color-mix(in srgb, var(--tk-border) 40%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--tk-table-border) 40%, transparent);
 }
 
 .tk-content th:last-child,
@@ -304,6 +322,7 @@
   --tk-table-cell-padding-y: 4px;
 }
 
+/* 信头预留空间：预设变体优先于 page-padding-y（L2 变体只能选择，不能自定义） */
 .tk-content--letterhead {
   padding-top: 8mm;
 }

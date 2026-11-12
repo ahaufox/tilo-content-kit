@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://tilo.work/schemas/infra-git-auto-suite/input.schema.json",
+  "title": "GitAutoSuiteInput",
+  "description": "git-auto-suite 原子分组提交套件输入载荷规范 (Input Payload Schema)。支持原子分桶提交、独立门禁验证与跨领域防呆守卫。",
+  "type": "object",
+  "required": ["buckets"],
+  "additionalProperties": false,
+  "properties": {
+    "buckets": {
+      "type": "array",
+      "description": "待提交的原子分组（桶）列表。每个桶独立执行 git add -> 独立命令验证 -> git commit，确保每次提交均可独立通过门禁并在历史中清晰回溯。",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["files", "commit_message"],
+        "additionalProperties": false,
+        "properties": {
+          "files": {
+            "type": "array",
+            "description": "该桶包含的文件路径清单（相对于 repo 根目录）。严禁在同一桶内混合互斥领域（如前后端混排、业务代码与文档混排、业务代码与.agents混排等）。",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "description": "文件相对路径，例如 tilo-backend-app/backend/routers/users.py 或 frontend-v2/src/components/Header.tsx"
+            }
+          },
+          "commit_message": {
+            "type": "string",
+            "description": "Git 提交信息。必须严格遵循 Conventional Commits 中文规范，格式为 <type>(<scope>): <中文描述> 或 <type>: <中文描述>。",
+            "minLength": 5,
+            "maxLength": 150
+          },
+          "verify_cmds": {
+            "type": "array",
+            "description": "该桶的独立门禁验证命令列表。提交前按顺序依次执行，全部命令退出码为 0 才允许执行 commit；任一命令失败将自动回滚 staged 暂存并终止流程。",
+            "default": [],
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "description": "待执行的验证 shell 命令，例如 ruff check backend/ 或 pnpm typecheck"
+            }
+          },
+          "allow_mixed": {
+            "type": "boolean",
+            "description": "是否豁免跨领域混合提交拦截守门。默认为 false。除极少数特殊强耦合重大重构外，严禁开启此选项。",
+            "default": false
+          }
+        }
+      }
+    },
+    "push": {
+      "type": "boolean",
+      "description": "是否在全部 Bucket 验证并提交成功后，自动执行 git push 推送到远端。默认为 false（推荐在本地确认无误后再推送到双远端）。",
+      "default": false
+    },
+    "push_to_protected": {
+      "type": "boolean",
+      "description": "是否允许向受保护分支（main/master/develop）执行普通 git push。默认 false（拒绝推送）；仅当用户明确授权在当前受保护分支上提交并推送、且已按 SKILL.md 核对各 push url 无分叉时，才与 push: true 同时置为 true。执行器绝不执行强推。",
+      "default": false
+    },
+    "sync_before_commit": {
+      "type": "boolean",
+      "description": "每次开始提交分桶前是否自动拉取最新远程提交（git pull --rebase），避免基于陈旧基线提交导致远端分叉冲突。默认为 true。",
+      "default": true
+    }
+  }
+}

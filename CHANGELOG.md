@@ -8,10 +8,15 @@
 - 发布门禁：`scripts/publish-content-kit.sh` 校验当前版本段落存在，缺失即中止发布。
 - 公共 API 面的机器可读快照见 `api/*.api.md`（`pnpm api:check` 校验）。
 
-## [未发布]
+## [0.6.1] - 2026-11-13
 
 ### 修复
 
+- **表格列宽手柄轻点事件捕获前移（`tiptap/table/handle-click.ts`）**：
+  - 将目标解析 `resolveHandleTarget` 前移至 `onMouseDown` 捕获期执行，把解析出的 `detail`、起始坐标与时间暂存到闭包中，彻底解决 `prosemirror-tables` 内部重建手柄 DOM 导致 `onMouseUp` 反查目标脱离文档、`TABLE_COLUMN_CLICK_EVENT` 永不派发的问题；
+  - `onMouseUp` 仅做位移与耗时判定（<5px 且 <400ms 派发事件，超出交回拖拽）；
+  - 插件 `destroy()` 补充对 `mouseup` 监听注销清理；
+  - 新增 `tests/table-handle-click.spec.ts` 行为测试与核心断点回归探针。
 - **随包 CSS token 消费契约修复（`styles.css`）**：
   - token 缺省声明从内容元素上移到 `:root, :host`，避免元素自身声明遮蔽 `themeStyle()` 在祖先容器注入的运行时主题（Shadow DOM 场景由 `:host` 接管）。
   - 补齐白名单死键的真实消费点：`font-family-body` / `font-family-heading`（替换旧名 `--tk-font-body`，正文与 h1–h6 分别消费，旧键无源码级消费方）；`page-padding-x` / `page-padding-y`（`.tk-content` 版心 `padding`，缺省 0 外观不变，`letterhead` 预设变体继续优先）；`table-border`（表格 5 处 color-mix 边框基色，缺省与 `--tk-border` 一致外观不变）。

@@ -1,6 +1,6 @@
 {
   "name": "@tilo-ui/content-kit",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Tilo 内容渲染与编辑 SDK：Markdown 静态/增量渲染、内容转换、Tiptap 扩展、Yjs 协同",
   "license": "MIT",
   "type": "module",

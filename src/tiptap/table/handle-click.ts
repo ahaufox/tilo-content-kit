@@ -104,36 +104,50 @@ export function createHandleClickPlugin() {
     key: new PluginKey('tableHandleClick'),
     view(editorView: any) {
       const dom: HTMLElement = editorView.dom;
+      let activeMouseUpHandler: ((e: MouseEvent) => void) | null = null;
+
+      const cleanupMouseUp = () => {
+        if (activeMouseUpHandler) {
+          document.removeEventListener('mouseup', activeMouseUpHandler, true);
+          activeMouseUpHandler = null;
+        }
+      };
 
       const onMouseDown = (event: MouseEvent) => {
         const target = event.target as HTMLElement;
         const isHandle = !!target && target.classList.contains('column-resize-handle');
         if (!isHandle) return;
 
+        // 核心修复：趁 target 仍在文档 DOM 树中，立即反查目标 tablePos 与列属性并暂存闭包，
+        // 彻底防御 prosemirror-tables 在后续阶段重建手柄 DOM 导致 mouseup 期反查失败。
+        const detail = resolveHandleTarget(editorView, target);
+        if (!detail) return;
+
         const startX = event.clientX;
         const startY = event.clientY;
         const startTime = Date.now();
 
+        cleanupMouseUp();
+
         const onMouseUp = (upEvent: MouseEvent) => {
-          document.removeEventListener('mouseup', onMouseUp, true);
+          cleanupMouseUp();
           const dx = Math.abs(upEvent.clientX - startX);
           const dy = Math.abs(upEvent.clientY - startY);
           const dt = Date.now() - startTime;
           const isClick = dx < CLICK_THRESHOLD_PX && dy < CLICK_THRESHOLD_PX && dt < CLICK_THRESHOLD_MS;
 
           if (isClick) {
-            const detail = resolveHandleTarget(editorView, target);
-            if (detail) {
-              detail.clientX = upEvent.clientX;
-              detail.clientY = upEvent.clientY;
-              upEvent.preventDefault();
-              upEvent.stopPropagation();
-              window.dispatchEvent(
-                new CustomEvent(TABLE_COLUMN_CLICK_EVENT, { detail })
-              );
-            }
+            detail.clientX = upEvent.clientX;
+            detail.clientY = upEvent.clientY;
+            upEvent.preventDefault();
+            upEvent.stopPropagation();
+            window.dispatchEvent(
+              new CustomEvent(TABLE_COLUMN_CLICK_EVENT, { detail })
+            );
           }
         };
+
+        activeMouseUpHandler = onMouseUp;
         // 捕获阶段监听 mouseup
         document.addEventListener('mouseup', onMouseUp, true);
       };
@@ -143,6 +157,7 @@ export function createHandleClickPlugin() {
 
       return {
         destroy() {
+          cleanupMouseUp();
           dom.removeEventListener('mousedown', onMouseDown, true);
         },
       };

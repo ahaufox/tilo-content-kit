@@ -103,4 +103,26 @@ describe('/markdown 共享构件契约', () => {
     const out = preprocessMarkdown(messy);
     expect(out).toContain('\n|');
   });
+
+  it('表格单元格内的各类 <br>、<br >、&lt;br&gt; 均渲染为原生 br 换行且不裸露文本', () => {
+    const markdownWithBrs = `
+| 潜在抗辩 | 应对策略与法律依据 |
+| --- | --- |
+| 非借贷关系抗辩<br>（如辩称系合伙投资、货款等） | 应对：要求书面证据。<br>依据：审理民间借贷规定。 |
+| 诉讼时效抗辩<br >（如辩称已过时效） | 应对：重点展示微信催款记录。<br />依据：时效中断。 |
+| 金额异议&lt;br&gt;（如辩称已还部分款项） | 应对：要求还款凭证。<br></br>目前无记录。 |
+`;
+    const { container } = render(<MarkdownContent content={markdownWithBrs} />);
+    const brList = container.querySelectorAll('table td br');
+    expect(brList.length).toBeGreaterThanOrEqual(6);
+
+    const cellText = container.textContent || '';
+    expect(cellText).not.toContain('<br>');
+    expect(cellText).not.toContain('<br >');
+    expect(cellText).not.toContain('&lt;br&gt;');
+    expect(cellText).not.toContain('</br>');
+
+    expect(screen.getByText(/非借贷关系抗辩/)).toBeInTheDocument();
+    expect(screen.getByText(/（如辩称系合伙投资、货款等）/)).toBeInTheDocument();
+  });
 });

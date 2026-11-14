@@ -30,7 +30,7 @@ const ENTRIES = [
   { href: '#convert', entry: '/convert', name: '双向转换', desc: 'Markdown ⇄ HTML，编辑器与 Word 粘贴场景' },
   { href: '#content', entry: '/content', name: '形态判定与清洗', desc: 'HTML / Markdown 判定、白名单清洗、表格列宽' },
   { href: '#legal', entry: '/legal', name: '法律文书规则', desc: '文书名去重、小标题加粗、章节层级归一化（唯一带行业约束的入口）' },
-  { href: '#tiptap', entry: '/tiptap', name: '表格编辑器', desc: 'ResizableTable 列宽持久化到文档模型' },
+  { href: '#tiptap', entry: '/editor', name: '富文本编辑器', desc: 'RichEditor 与 EditorToolbar，内置颜色、高亮与表格持久化' },
   { href: '#collab', entry: '/collab', name: '协同基座', desc: 'Yjs 协同与人机撤销隔离，AI 编辑独立回退' },
   { href: '#theme', entry: '/theme', name: '主题 token', desc: '白名单校验 + 运行时变量注入，免重建 CSS' },
 ] as const;

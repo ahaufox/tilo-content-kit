@@ -78,9 +78,14 @@ const next = normalizeLegalMarkdown(source);`,
 
 const profile = profileFromDocumentTemplate(settings);
 const { style, applied, rejected } = applyProfile(profile);`,
-  editor: `import { ResizableTable, ResizableTableCell, ResizableTableHeader } from '@tilo-ui/content-kit/tiptap';
+  editor: `import { RichEditor, EditorToolbar } from '@tilo-ui/content-kit/editor';
 
-ResizableTable.configure({ resizable: true, cellMinWidth: 80 })`,
+// 开箱即用的受控编辑器（自带 EditorToolbar、文字颜色标红与表格持久化）
+<RichEditor
+  value={markdown}
+  onChange={setMarkdown}
+  placeholder="在此输入或编辑内容..."
+/>`,
   collab: `import { computeMembers, tiloAwarenessAdapter } from '@tilo-ui/content-kit/collab';
 
 // 连接与鉴权由宿主注入；本演示使用内存 Mock provider。

@@ -9,10 +9,32 @@ export default defineConfig({
     tiptap: 'src/tiptap/index.ts',
     collab: 'src/collab/index.ts',
     theme: 'src/theme/index.ts',
-    // 过渡别名：./editor → ./tiptap，1.0 移除
+    // 双入口支持：./editor 与 ./tiptap 均导出 RichEditor 与 EditorToolbar
     'compat-editor': 'src/compat/editor.ts',
   },
   format: ['esm', 'cjs'],
+  external: [
+    'react',
+    'react-dom',
+    '@tiptap/core',
+    '@tiptap/react',
+    '@tiptap/starter-kit',
+    '@tiptap/extension-color',
+    '@tiptap/extension-highlight',
+    '@tiptap/extension-placeholder',
+    '@tiptap/extension-table',
+    '@tiptap/extension-table-row',
+    '@tiptap/extension-text-align',
+    '@tiptap/extension-text-style',
+    '@tiptap/y-tiptap',
+    'react-markdown',
+    'remark-gfm',
+    'yjs',
+    'y-websocket',
+    'prosemirror-model',
+    'prosemirror-state',
+    'prosemirror-tables',
+  ],
   esbuildOptions(options) {
     options.jsx = 'automatic';
   },

@@ -22,7 +22,7 @@ export function BoundsSection() {
             演示层做了桥接，并未改 SDK。
           </li>
           <li>
-            <code>/editor</code> 是 <code>/tiptap</code> 的弃用别名，将在 1.0 移除，故未单独展示。
+            <code>/editor</code> 与 <code>/tiptap</code> 为等价同构双入口（均完整导出 <code>RichEditor</code>、<code>EditorToolbar</code> 与 <code>ResizableTable</code> 表格扩展），满足不同工程命名习惯。
           </li>
           <li>
             源码双端托管：

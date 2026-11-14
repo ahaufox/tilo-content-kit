@@ -22,7 +22,7 @@ const SECTIONS = [
   { id: 'convert', label: '双向转换' },
   { id: 'content', label: '形态判定与清洗' },
   { id: 'legal', label: '法律文书规则' },
-  { id: 'tiptap', label: '表格编辑器' },
+  { id: 'tiptap', label: '富文本编辑器' },
   { id: 'collab', label: '协同基座' },
   { id: 'theme', label: '主题 token' },
   { id: 'proof', label: '能力证据' },

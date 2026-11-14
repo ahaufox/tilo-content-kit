@@ -1,9 +1,7 @@
 /**
- * /tiptap — Tiptap 扩展入口（0.6.0 起由 /editor 更名，/editor 保留为过渡别名）
+ * /tiptap — Tiptap 扩展与编辑器基座入口
  *
- * 设计边界：仅上收业务无关的纯 Tiptap/ProseMirror 扩展实现。UI 编辑器组件
- * （MarkdownRichEditor / Toolbar / TableBubbleMenu）因强依赖宿主 Tailwind 原子类、
- * lucide 图标与业务 UI 组件，仍留在宿主，通过本入口复用以下扩展，避免跨层耦合。
+ * 包含纯 Tiptap/ProseMirror 扩展（ResizableTable 等）以及开箱即用的 RichEditor 与 EditorToolbar。
  */
 export { CONTENT_KIT_VERSION } from '../version';
 
@@ -17,3 +15,30 @@ export {
 } from './ResizableTable';
 
 export type { TableColumnClickDetail } from './ResizableTable';
+
+// 导出编辑器与格式工具栏基座组件
+export {
+  RichEditor,
+  type RichEditorProps,
+} from '../editor/RichEditor';
+
+export {
+  EditorToolbar,
+  type EditorToolbarProps,
+} from '../editor/EditorToolbar';
+
+export {
+  ColorPicker,
+  type ColorPickerProps,
+} from '../editor/ColorPicker';
+
+export {
+  DEFAULT_TEXT_COLORS,
+  DEFAULT_HIGHLIGHT_COLORS,
+  type ColorOption,
+} from '../editor/colors';
+
+export {
+  createDefaultEditorExtensions,
+  type DefaultEditorExtensionsOptions,
+} from '../editor/defaultExtensions';

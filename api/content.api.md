@@ -2,7 +2,7 @@
 
 > 自动生成，请勿手改。刷新：`pnpm api:update`。校验：`pnpm api:check`。
 
-<!-- 类型摘要 sha256:22844e4896992c03 -->
+<!-- 类型摘要 sha256:d632d6c0334ff75b -->
 
 ## 运行时导出符号
 
@@ -175,15 +175,16 @@ declare function injectTableWidthsToHtml(html: string, totalWidthPx?: number): s
 
 export { BASE_MIN_COL_WIDTH_PX, BASE_PADDING_PX, CHAR_WIDTH_UNIT_PX, type ColumnAnalysis, type ColumnCategory, DEFAULT_TABLE_WIDTH_PX, EXTREME_OUTLIER_RATIO, FIRST_COL_WIDTH_PX, HEADER_WEIGHT_BOOST, INDEX_COL_MAX_WIDTH_PX, INDEX_COL_MIN_WIDTH_PX, INDEX_COL_WIDTH_PX, MAX_COL_RATIO, MAX_SAMPLE_ROWS, TABLE_COMPACT_HEADER_RE, TABLE_INDEX_HEADER_RE, TABLE_LONG_HEADER_RE, analyzeTableColumnDetails, calculateTableColumnWidths, containsDisguisedMarkdown, detectMarkdown, getPrintablePageWidthPx, injectTableWidthsToHtml, isBlockContent, isHtml, isHtmlSubstantivelyEmpty, isMarkdown, measureCellLength, sanitizeHtml };
 
-export { ensureHtml, ensureInlineHtml, ensureSelectionHtml, htmlToMarkdown } from './chunk.js';
-import './chunk.js';
-export { CONTENT_KIT_VERSION } from './chunk.js';
-//# sourceMappingURL=convert.js.map
-//# sourceMappingURL=convert.js.map
-
 import './chunk.js';
 export { boldLegalSectionHeadings, isLegalChapterHeading, legalSectionHeadingHtml, normalizeLegalMarkdown, stripLeadingDocumentTitle } from './chunk.js';
 export { CONTENT_KIT_VERSION } from './chunk.js';
 //# sourceMappingURL=legal.js.map
 //# sourceMappingURL=legal.js.map
+
+import './chunk.js';
+export { ensureHtml, ensureInlineHtml, ensureSelectionHtml, htmlToMarkdown } from './chunk.js';
+import './chunk.js';
+export { CONTENT_KIT_VERSION } from './chunk.js';
+//# sourceMappingURL=convert.js.map
+//# sourceMappingURL=convert.js.map
 ```

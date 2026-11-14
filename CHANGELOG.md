@@ -8,6 +8,21 @@
 - 发布门禁：`scripts/publish-content-kit.sh` 校验当前版本段落存在，缺失即中止发布。
 - 公共 API 面的机器可读快照见 `api/*.api.md`（`pnpm api:check` 校验）。
 
+## [0.6.2] - 2026-11-14
+
+### 新增
+
+- **纯净通用富文本编辑器与格式工具栏（`EditorToolbar` / `RichEditor` / `ColorPicker`）**：
+  - 新增 `EditorToolbar`：零外部 UI 框架与图标库依赖（纯原生内联 SVG），支持基础排版、标题 H1–H3、左中右对齐、列表、引用块、表格行列表格操作、水平分割线与撤销重做；
+  - 核心补齐**文字颜色（`IconPalette`）与文本高亮（`IconHighlighter`）**：原生内置 `ColorPicker` 纯 DOM 浮层与色板，支持警示鲜红（`#ef4444`）等常用色与清除重置，与 `colorSpan` 往返转换形成技术闭环；
+  - **工具栏超宽自适应与响应式排版**：
+    - 默认单行滚动模式（`multiline=false`）：格式按钮区（`tk-toolbar-scroll-container`）支持极细（3px）平滑横向滚动与触摸滑动，右侧业务插槽 `extraActions` 吸附常驻（sticky 绝不被滚出视口）；
+    - 语义组自动折行模式（`multiline=true`）：按语义化按钮组（`tk-toolbar-group`）整组折行，组内紧凑互保，彻底杜绝单按钮破碎换行；
+    - `RichEditor` 支持 `multilineToolbar?: boolean` 透传。
+  - 新增 `RichEditor`：开箱即用的受控 Markdown/HTML 所见即所得富文本编辑器基座，内置更新互斥锁与实质差异比对，杜绝受控光标跳动与死循环更新，支持 Ctrl+S 与 Esc 快捷键拦截；
+  - 样式完全消费随包 `styles.css` 与 `--tk-*` 设计 Token，零 Tailwind 强绑定，自适应浅深色主题；
+  - 双入口统一导出：在 `/editor` 与 `/tiptap` 下同时导出 `RichEditor`、`EditorToolbar`、`ColorPicker`、`createDefaultEditorExtensions` 等。
+
 ## [0.6.1] - 2026-11-13
 
 ### 修复

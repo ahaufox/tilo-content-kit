@@ -1,6 +1,6 @@
 {
   "name": "@tilo-ui/content-kit",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Tilo 内容渲染与编辑 SDK：Markdown 静态/增量渲染、内容转换、Tiptap 扩展、Yjs 协同",
   "license": "MIT",
   "type": "module",
@@ -75,12 +75,21 @@
   },
   "peerDependencies": {
     "@tiptap/core": ">=3.30.2 <4",
+    "@tiptap/extension-color": ">=3.30.2 <4",
+    "@tiptap/extension-highlight": ">=3.30.2 <4",
+    "@tiptap/extension-placeholder": ">=3.30.2 <4",
     "@tiptap/extension-table": ">=3.30.2 <4",
+    "@tiptap/extension-table-row": ">=3.30.2 <4",
+    "@tiptap/extension-text-align": ">=3.30.2 <4",
+    "@tiptap/extension-text-style": ">=3.30.2 <4",
+    "@tiptap/react": ">=3.30.2 <4",
+    "@tiptap/starter-kit": ">=3.30.2 <4",
     "@tiptap/y-tiptap": ">=3.2.0 <4",
     "prosemirror-model": "^1.25.0",
     "prosemirror-state": "^1.4.0",
     "prosemirror-tables": "^1.8.0",
     "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-markdown": "^10.0.0",
     "remark-gfm": "^4.0.0",
     "y-websocket": "^3.0.0",
@@ -90,7 +99,31 @@
     "@tiptap/core": {
       "optional": true
     },
+    "@tiptap/extension-color": {
+      "optional": true
+    },
+    "@tiptap/extension-highlight": {
+      "optional": true
+    },
+    "@tiptap/extension-placeholder": {
+      "optional": true
+    },
     "@tiptap/extension-table": {
+      "optional": true
+    },
+    "@tiptap/extension-table-row": {
+      "optional": true
+    },
+    "@tiptap/extension-text-align": {
+      "optional": true
+    },
+    "@tiptap/extension-text-style": {
+      "optional": true
+    },
+    "@tiptap/react": {
+      "optional": true
+    },
+    "@tiptap/starter-kit": {
       "optional": true
     },
     "@tiptap/y-tiptap": {
@@ -106,6 +139,9 @@
       "optional": true
     },
     "react": {
+      "optional": true
+    },
+    "react-dom": {
       "optional": true
     },
     "react-markdown": {
@@ -125,8 +161,14 @@
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.3.0",
     "@tiptap/extension-collaboration": "^3.33.0",
+    "@tiptap/extension-color": "^3.34.0",
+    "@tiptap/extension-highlight": "^3.34.0",
+    "@tiptap/extension-placeholder": "^3.34.0",
     "@tiptap/extension-table": "^3.33.0",
     "@tiptap/extension-table-row": "^3.33.0",
+    "@tiptap/extension-text-align": "^3.34.0",
+    "@tiptap/extension-text-style": "^3.34.0",
+    "@tiptap/react": "^3.34.0",
     "@tiptap/starter-kit": "^3.33.0",
     "@tiptap/y-tiptap": "^3.2.0",
     "@types/node": "^22.0.0",

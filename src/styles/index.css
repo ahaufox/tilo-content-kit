@@ -338,3 +338,292 @@
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
+
+/* ── 富文本编辑器与格式工具栏（Editor & Toolbar）─────────────────────────── */
+.tk-editor-box {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid var(--tk-border);
+  border-radius: var(--tk-radius-block);
+  background: var(--tk-card);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.tk-editor-box--disabled {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.tk-editor-area {
+  flex: 1 1 auto;
+  min-height: 180px;
+  overflow-y: auto;
+}
+
+.tk-editor-content {
+  min-height: 160px;
+  padding: 16px;
+  outline: none;
+  cursor: text;
+}
+
+.tk-editor-content .ProseMirror {
+  outline: none;
+  min-height: 140px;
+}
+
+.tk-editor-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--tk-text-muted);
+  pointer-events: none;
+  height: 0;
+}
+
+/* ── 工具栏 ────────────────────────────────────────────────────────────────── */
+.tk-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--tk-border);
+  background: color-mix(in srgb, var(--tk-surface-low) 85%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  user-select: none;
+  box-sizing: border-box;
+  width: 100%;
+  position: relative;
+}
+
+/* 1. 单行横向平滑滚动模式 (默认) */
+.tk-toolbar--scroll {
+  overflow: hidden;
+}
+
+.tk-toolbar--scroll .tk-toolbar-scroll-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--tk-text-muted) 25%, transparent) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 极细 3px 滚动条，不遮挡按钮，hover 或滚动时显现 */
+.tk-toolbar--scroll .tk-toolbar-scroll-container::-webkit-scrollbar {
+  height: 3px;
+}
+
+.tk-toolbar--scroll .tk-toolbar-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tk-toolbar--scroll .tk-toolbar-scroll-container::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--tk-text-muted) 20%, transparent);
+  border-radius: 9999px;
+}
+
+.tk-toolbar--scroll:hover .tk-toolbar-scroll-container::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--tk-text-muted) 45%, transparent);
+}
+
+.tk-toolbar--scroll .tk-toolbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+/* 2. 多行自适应折行模式 (multiline) */
+.tk-toolbar--wrap {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  overflow: visible;
+}
+
+.tk-toolbar--wrap .tk-toolbar-scroll-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.tk-toolbar--wrap .tk-toolbar-inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  column-gap: 2px;
+}
+
+/* 语义化功能按钮组：组内紧凑、组间整组换行，杜绝单个按钮破碎撕裂 */
+.tk-toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.tk-toolbar-extra {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  background: inherit;
+}
+
+.tk-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--tk-radius-chip);
+  background: transparent;
+  color: var(--tk-text-body);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  box-sizing: border-box;
+}
+
+.tk-toolbar-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--tk-text-muted) 15%, transparent);
+  color: var(--tk-text-main);
+}
+
+.tk-toolbar-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.tk-toolbar-btn--active {
+  background: color-mix(in srgb, var(--tk-tertiary) 18%, transparent);
+  color: var(--tk-tertiary);
+  font-weight: 600;
+}
+
+.tk-toolbar-divider {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--tk-border);
+  flex-shrink: 0;
+}
+
+/* ── 表格快捷操作胶囊 ──────────────────────────────────────────────────────── */
+.tk-toolbar-table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  margin-left: 2px;
+  border: 1px solid color-mix(in srgb, var(--tk-tertiary) 35%, transparent);
+  border-radius: var(--tk-radius-chip);
+  background: color-mix(in srgb, var(--tk-tertiary) 10%, transparent);
+}
+
+.tk-toolbar-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--tk-radius-chip);
+  background: transparent;
+  color: var(--tk-text-main);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.tk-toolbar-mini-btn:hover {
+  background: color-mix(in srgb, var(--tk-tertiary) 25%, transparent);
+}
+
+.tk-toolbar-mini-btn--danger {
+  color: #e11d48;
+}
+
+.tk-toolbar-mini-btn--danger:hover {
+  background: rgba(225, 29, 72, 0.15);
+}
+
+/* ── 颜色选择器浮层 ────────────────────────────────────────────────────────── */
+.tk-color-picker {
+  position: relative;
+  display: inline-flex;
+}
+
+.tk-color-popover {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--tk-border);
+  border-radius: var(--tk-radius-block);
+  background: var(--tk-card);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+}
+
+.tk-color-swatches {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tk-color-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  box-sizing: border-box;
+}
+
+.tk-color-swatch:hover {
+  transform: scale(1.18);
+}
+
+.tk-color-swatch--rect {
+  border-radius: var(--tk-radius-chip);
+}
+
+.tk-color-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  padding: 0 6px;
+  border: 1px solid var(--tk-border);
+  border-radius: var(--tk-radius-chip);
+  background: var(--tk-surface-low);
+  color: var(--tk-text-main);
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.tk-color-clear-btn:hover {
+  background: color-mix(in srgb, var(--tk-text-muted) 20%, transparent);
+}
+

@@ -8,6 +8,16 @@
 - 发布门禁：`scripts/publish-content-kit.sh` 校验当前版本段落存在，缺失即中止发布。
 - 公共 API 面的机器可读快照见 `api/*.api.md`（`pnpm api:check` 校验）。
 
+## [0.6.3] - 2026-11-14
+
+### 新增与优化
+
+- **纯净通用富文本编辑器与格式工具栏（`EditorToolbar` / `RichEditor` / `ColorPicker`）正式发布**：
+  - 正式发布 `EditorToolbar`、`RichEditor` 与 `ColorPicker` 导出，提供零外部依赖的原生 SVG 格式化工具栏与色板；
+  - 调优富文本工具栏尺寸与轻量加粗样式（32px 按钮与 44px 工具栏规范），完善 Tiptap ^3.34.0 依赖兼容性；
+  - 双入口统一导出：`/editor` 与 `/tiptap` 均支持导入 `EditorToolbar`、`EditorToolbarProps`、`ColorOption` 等核心组件与类型；
+  - 引入源码指纹比对机制（`content-kit-fingerprint.mjs`）与 `--skip-unchanged-contract` 支持，彻底防范同版本已存在跳过导致的未发雷区。
+
 ## [0.6.2] - 2026-11-14
 
 ### 新增

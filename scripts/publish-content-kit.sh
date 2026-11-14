@@ -10,8 +10,10 @@
 #   - 严禁开启 set -x，避免 CI 日志打印明文 Token
 #   - 临时 .npmrc 由 trap 在任意退出路径清理，且不写入包目录
 #
-# 幂等：当前版本已存在于制品库时直接跳过（CI 沙箱没有本地发布状态文件，
-# 旧实现依赖 .publish-state 去重，导致 tag 推送必然以 409 失败）。
+# 变更检测与指纹机制：
+#   - 计算源码指纹（src/ 目录内容、tsup.config.ts 与 package.json 规范化哈希）；
+#   - 与上次发布记录对比：指纹未变且版本未变时跳过；--skip-unchanged-contract 可跳过无改动发布；
+#   - 指纹改变但版本未递增（线上已存在）时阻断并提示递增版本，严禁静默吞掉新代码。
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,10 +40,11 @@ usage() {
 构建、校验并发布 ${PACKAGE_NAME} 到私有 npm 制品库。
 
 选项:
-  --version=<版本>   指定发布版本，并同步 package.json 与包内版本常量；
-                     省略时沿用 package.json 的当前版本
-  --force            忽略「同版本已发布」的幂等跳过，强制尝试发布
-  --help, -h         显示本帮助并退出（不产生任何构建或上传）
+  --version=<版本>           指定发布版本，并同步 package.json 与包内版本常量；
+                             省略时沿用 package.json 的当前版本
+  --force                    忽略指纹与「同版本已发布」的幂等跳过，强制发布
+  --skip-unchanged-contract  源码指纹未发生改动即跳过发布（即使指定了新版本）
+  --help, -h                 显示本帮助并退出（不产生任何构建或上传）
 
 配置来源（以下信息不在帮助与文档中重复维护）:
   包名 / 当前版本      package.json 的 name / version
@@ -56,7 +59,7 @@ usage() {
   私有源权限           由制品库侧授权决定，脚本不内置任何令牌
 
 执行流程:
-  版本解析 → CHANGELOG 版本段落门禁 → 凭据探测 → 制品库可达性与版本幂等预检
+  指纹比对 → 版本解析 → CHANGELOG 门禁 → 凭据探测 → 制品库版本幂等预检
   → 依赖安装 → build → test → typecheck → api:check → npm publish
   凭据注入通过临时 .npmrc 完成，进程退出时清理；日志中令牌始终脱敏。
   版本遵循 SemVer 只增不覆盖。
@@ -72,10 +75,12 @@ EOF
 
 TARGET_VERSION=""
 FORCE=false
+SKIP_UNCHANGED_CONTRACT=false
 for arg in "$@"; do
   case "$arg" in
     --version=*) TARGET_VERSION="${arg#*=}" ;;
     --force) FORCE=true ;;
+    --skip-unchanged-contract) SKIP_UNCHANGED_CONTRACT=true ;;
     --help|-h) usage; exit 0 ;;
     *) echo "未知参数: ${arg} （使用 --help 查看用法）"; exit 1 ;;
   esac
@@ -86,8 +91,69 @@ if [ -z "$REGISTRY_URL" ]; then
   exit 1
 fi
 
+# ---------- 状态读取与写入辅助函数 ----------
+PUBLISH_STATE_FILE="${SDK_DIR}/.publish-state"
+
+state_get() {
+  local file="$1" key="$2"
+  [ -f "${file}" ] || return 0
+  grep -m1 "^${key}=" "${file}" 2>/dev/null | cut -d'=' -f2- || true
+}
+
+state_set() {
+  local file="$1" key="$2" value="$3"
+  local tmp="${file}.tmp"
+  : > "${tmp}"
+  if [ -f "${file}" ]; then
+    grep -v "^${key}=" "${file}" > "${tmp}" 2>/dev/null || true
+  fi
+  printf '%s=%s\n' "${key}" "${value}" >> "${tmp}"
+  mv "${tmp}" "${file}"
+}
+
+now_iso() {
+  date -Iseconds 2>/dev/null || date '+%Y-%m-%dT%H:%M:%S%z'
+}
+
 CURRENT_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).version)")
 RESOLVED_VERSION="${TARGET_VERSION:-$CURRENT_VERSION}"
+
+# ---------- 源码指纹计算与变更检测 ----------
+FINGERPRINT_SCRIPT="${SCRIPT_DIR}/content-kit-fingerprint.mjs"
+CURRENT_FINGERPRINT=""
+if [ -f "${FINGERPRINT_SCRIPT}" ]; then
+  CURRENT_FINGERPRINT=$(node "${FINGERPRINT_SCRIPT}" 2>/dev/null || true)
+fi
+
+LAST_FINGERPRINT=$(state_get "${PUBLISH_STATE_FILE}" published_fingerprint)
+LAST_PUBLISHED_VERSION=$(state_get "${PUBLISH_STATE_FILE}" published_version)
+
+echo ">> 当前源码指纹: ${CURRENT_FINGERPRINT:-无}"
+echo ">> 上次发布指纹: ${LAST_FINGERPRINT:-无 (尚未记录)}"
+echo ">> 上次发布版本: ${LAST_PUBLISHED_VERSION:-无}"
+
+SKIP_PUBLISH=false
+if [ "${FORCE}" = true ]; then
+  echo ">> 已指定 --force: 跳过变更检测，强制发布"
+elif [ -n "${CURRENT_FINGERPRINT}" ] && [ -n "${LAST_FINGERPRINT}" ] && [ "${CURRENT_FINGERPRINT}" = "${LAST_FINGERPRINT}" ]; then
+  if [ "${LAST_PUBLISHED_VERSION}" = "${RESOLVED_VERSION}" ]; then
+    SKIP_PUBLISH=true
+    echo "✔ @tilo-ui/content-kit 源码指纹与版本均未变化 (${RESOLVED_VERSION})，跳过本次发布"
+  elif [ "${SKIP_UNCHANGED_CONTRACT}" = true ]; then
+    SKIP_PUBLISH=true
+    echo "⚠ 源码指纹未变化 (--skip-unchanged-contract)，跳过本次发布"
+  else
+    echo ">> ℹ️ 源码指纹未变化，但目标版本已递增 (${LAST_PUBLISHED_VERSION} → ${RESOLVED_VERSION})，执行发布"
+  fi
+fi
+
+if [ "${SKIP_PUBLISH}" = true ]; then
+  state_set "${PUBLISH_STATE_FILE}" last_run_status "skipped"
+  state_set "${PUBLISH_STATE_FILE}" last_run_version "${RESOLVED_VERSION}"
+  state_set "${PUBLISH_STATE_FILE}" last_run_fingerprint "${CURRENT_FINGERPRINT}"
+  state_set "${PUBLISH_STATE_FILE}" last_run_at "$(now_iso)"
+  exit 0
+fi
 
 # 版本由 env 约定（CONTENT_KIT_VERSION）。若 env 与本次发布版本不一致，说明消费方
 # 锁定的版本与即将发布的包会漂移，宁可中止也不发一个没人安装的版本。
@@ -138,11 +204,8 @@ if [ -z "$AUTH_TOKEN" ]; then
 fi
 echo ">> 凭证来源: ${TOKEN_SOURCE}（长度 ${#AUTH_TOKEN}，已脱敏）"
 
-# 认证键必须写在 registry 的**完整路径**上：CNB 私有源按路径前缀匹配，
-# 只写 //host/:_authToken 时 npm view 可匿名读通，但 npm publish 会报 ENEEDAUTH。
-# REGISTRY_URL 以 / 结尾，拼出的键形如 //npm.cnb.cool/tilo-work/repo/-/packages/:_authToken
+# 认证键必须写在 registry 的完整路径上
 REGISTRY_PATH_KEY="//${REGISTRY_URL#*://}"
-# 临时凭据文件放在包目录之外，避免污染工作区与被误提交
 TEMP_NPMRC="$(mktemp "${TMPDIR:-/tmp}/tilo-content-kit-npmrc.XXXXXX")"
 cleanup() { rm -f "$TEMP_NPMRC"; }
 trap cleanup EXIT INT TERM
@@ -153,15 +216,28 @@ ${REGISTRY_PATH_KEY}:_authToken=${AUTH_TOKEN}
 always-auth=true
 EOF
 
-# 幂等预检：npm view 命中当前版本即视为已发布（CI 与本地行为一致）
+# 幂等与版本冲突预检：npm view 命中当前版本时
 PRECHECK=$(npm view "${PACKAGE_NAME}@${RESOLVED_VERSION}" version --registry "$REGISTRY_URL" --userconfig "$TEMP_NPMRC" 2>&1 || true)
 PRECHECK_TRIMMED=$(printf '%s' "$PRECHECK" | tr -d '[:space:]')
 if [ "$PRECHECK_TRIMMED" = "$RESOLVED_VERSION" ]; then
-  if [ "$FORCE" != true ]; then
-    echo ">> ${PACKAGE_NAME}@${RESOLVED_VERSION} 已存在于制品库，跳过（--force 可强制）"
-    exit 0
+  if [ "$FORCE" = true ]; then
+    echo ">> 当前版本已存在，但指定了 --force，继续尝试发布"
+  else
+    # 线上已存在该版本：若指纹变了，绝不能静默跳过（因为新代码发布不出去）
+    if [ -n "${CURRENT_FINGERPRINT}" ] && [ -n "${LAST_FINGERPRINT}" ] && [ "${CURRENT_FINGERPRINT}" != "${LAST_FINGERPRINT}" ]; then
+      echo "✘ 检测到源码指纹已改变，但版本 ${RESOLVED_VERSION} 已存在于制品库中！"
+      echo "   私有源遵循 SemVer 只增不覆盖原则，必须递增版本号发布新改动。"
+      echo "   请在 package.json / CHANGELOG.md 中递增版本号（如升级为 patch 版本），或使用 --version=<新版本> 重新发布。"
+      exit 1
+    else
+      echo ">> ${PACKAGE_NAME}@${RESOLVED_VERSION} 已存在于制品库，跳过发布"
+      state_set "${PUBLISH_STATE_FILE}" last_run_status "skipped"
+      state_set "${PUBLISH_STATE_FILE}" last_run_version "${RESOLVED_VERSION}"
+      state_set "${PUBLISH_STATE_FILE}" last_run_fingerprint "${CURRENT_FINGERPRINT}"
+      state_set "${PUBLISH_STATE_FILE}" last_run_at "$(now_iso)"
+      exit 0
+    fi
   fi
-  echo ">> 当前版本已存在，但指定了 --force，继续尝试发布"
 fi
 if echo "$PRECHECK" | grep -qE 'E401|E403|Unauthorized|not authorized'; then
   echo "✘ 凭据未通过制品库认证（401/403）：当前令牌不具备 ${REGISTRY_URL} 的读写权限"
@@ -174,8 +250,7 @@ if echo "$PRECHECK" | grep -qi 'registry not found'; then
   exit 1
 fi
 
-# 写权限预检：私有源允许匿名 npm view，因此「能读到版本」不等于「能发布」。
-# 提前用 whoami 验证身份，避免 build/test/typecheck 全跑完才在 npm publish 处 ENEEDAUTH。
+# 写权限预检
 WHOAMI=$(npm whoami --registry "$REGISTRY_URL" --userconfig "$TEMP_NPMRC" 2>&1 || true)
 if [ -z "$WHOAMI" ] || echo "$WHOAMI" | grep -qiE 'need auth|ENEEDAUTH|E401|E403|Unauthorized|not authorized'; then
   echo "✘ 凭据未通过制品库写权限校验（npm whoami 失败）"
@@ -202,6 +277,13 @@ cleanup
 trap - EXIT INT TERM
 
 if [ "$UPLOAD_STATUS" -eq 0 ]; then
+  state_set "${PUBLISH_STATE_FILE}" published_version "${RESOLVED_VERSION}"
+  state_set "${PUBLISH_STATE_FILE}" published_fingerprint "${CURRENT_FINGERPRINT}"
+  state_set "${PUBLISH_STATE_FILE}" published_at "$(now_iso)"
+  state_set "${PUBLISH_STATE_FILE}" last_run_status "published"
+  state_set "${PUBLISH_STATE_FILE}" last_run_version "${RESOLVED_VERSION}"
+  state_set "${PUBLISH_STATE_FILE}" last_run_fingerprint "${CURRENT_FINGERPRINT}"
+  state_set "${PUBLISH_STATE_FILE}" last_run_at "$(now_iso)"
   echo "✔ 发布成功: ${PACKAGE_NAME}@${RESOLVED_VERSION}"
   exit 0
 fi

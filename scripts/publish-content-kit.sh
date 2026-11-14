@@ -12,8 +12,10 @@
 #
 # 变更检测与指纹机制：
 #   - 计算源码指纹（src/ 目录内容、tsup.config.ts 与 package.json 规范化哈希）；
-#   - 与上次发布记录对比：指纹未变且版本未变时跳过；--skip-unchanged-contract 可跳过无改动发布；
-#   - 指纹改变但版本未递增（线上已存在）时阻断并提示递增版本，严禁静默吞掉新代码。
+#   - 默认覆盖发布：不因指纹/版本未变、或线上已存在同名版本而跳过，直接构建并上传覆盖；
+#   - --no-force 恢复旧的幂等跳过（指纹与版本均未变即跳过、线上已存在同版本即跳过）；
+#   - --skip-unchanged-contract 显式要求「指纹未变即跳过」，优先级高于默认覆盖发布；
+#   - 指纹改变但版本未递增且指定 --no-force 时阻断并提示递增版本，严禁静默吞掉新代码。
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -42,8 +44,9 @@ usage() {
 选项:
   --version=<版本>           指定发布版本，并同步 package.json 与包内版本常量；
                              省略时沿用 package.json 的当前版本
-  --force                    忽略指纹与「同版本已发布」的幂等跳过，强制发布
-  --skip-unchanged-contract  源码指纹未发生改动即跳过发布（即使指定了新版本）
+  --force                    覆盖发布（默认行为，保留以兼容既有 CI / 脚本调用）
+  --no-force                 恢复幂等跳过：指纹与版本均未变、或线上已存在同版本时不发布
+  --skip-unchanged-contract  源码指纹未发生改动即跳过发布（优先于默认覆盖发布）
   --help, -h                 显示本帮助并退出（不产生任何构建或上传）
 
 配置来源（以下信息不在帮助与文档中重复维护）:
@@ -62,7 +65,7 @@ usage() {
   指纹比对 → 版本解析 → CHANGELOG 门禁 → 凭据探测 → 制品库版本幂等预检
   → 依赖安装 → build → test → typecheck → api:check → npm publish
   凭据注入通过临时 .npmrc 完成，进程退出时清理；日志中令牌始终脱敏。
-  版本遵循 SemVer 只增不覆盖。
+  版本默认允许覆盖同名制品（--no-force 可恢复 SemVer 只增不覆盖的幂等行为）。
 
 常用命令（在包目录执行）:
   pnpm install
@@ -74,12 +77,14 @@ EOF
 }
 
 TARGET_VERSION=""
-FORCE=false
+# 发布策略默认覆盖：默认不跳过，重跑即用当前源码覆盖同名版本制品。
+FORCE=true
 SKIP_UNCHANGED_CONTRACT=false
 for arg in "$@"; do
   case "$arg" in
     --version=*) TARGET_VERSION="${arg#*=}" ;;
     --force) FORCE=true ;;
+    --no-force) FORCE=false ;;
     --skip-unchanged-contract) SKIP_UNCHANGED_CONTRACT=true ;;
     --help|-h) usage; exit 0 ;;
     *) echo "未知参数: ${arg} （使用 --help 查看用法）"; exit 1 ;;
@@ -132,16 +137,22 @@ echo ">> 当前源码指纹: ${CURRENT_FINGERPRINT:-无}"
 echo ">> 上次发布指纹: ${LAST_FINGERPRINT:-无 (尚未记录)}"
 echo ">> 上次发布版本: ${LAST_PUBLISHED_VERSION:-无}"
 
+FINGERPRINT_UNCHANGED=false
+if [ -n "${CURRENT_FINGERPRINT}" ] && [ -n "${LAST_FINGERPRINT}" ] && [ "${CURRENT_FINGERPRINT}" = "${LAST_FINGERPRINT}" ]; then
+  FINGERPRINT_UNCHANGED=true
+fi
+
 SKIP_PUBLISH=false
-if [ "${FORCE}" = true ]; then
-  echo ">> 已指定 --force: 跳过变更检测，强制发布"
-elif [ -n "${CURRENT_FINGERPRINT}" ] && [ -n "${LAST_FINGERPRINT}" ] && [ "${CURRENT_FINGERPRINT}" = "${LAST_FINGERPRINT}" ]; then
+if [ "${SKIP_UNCHANGED_CONTRACT}" = true ] && [ "${FINGERPRINT_UNCHANGED}" = true ]; then
+  # 显式要求「指纹未变即跳过」，优先级高于默认覆盖发布
+  SKIP_PUBLISH=true
+  echo "⚠ 源码指纹未变化 (--skip-unchanged-contract)，跳过本次发布"
+elif [ "${FORCE}" = true ]; then
+  echo ">> 覆盖发布模式 (默认): 指纹/版本未变或线上同版本已存在都不拦截，直接构建并上传"
+elif [ "${FINGERPRINT_UNCHANGED}" = true ]; then
   if [ "${LAST_PUBLISHED_VERSION}" = "${RESOLVED_VERSION}" ]; then
     SKIP_PUBLISH=true
     echo "✔ @tilo-ui/content-kit 源码指纹与版本均未变化 (${RESOLVED_VERSION})，跳过本次发布"
-  elif [ "${SKIP_UNCHANGED_CONTRACT}" = true ]; then
-    SKIP_PUBLISH=true
-    echo "⚠ 源码指纹未变化 (--skip-unchanged-contract)，跳过本次发布"
   else
     echo ">> ℹ️ 源码指纹未变化，但目标版本已递增 (${LAST_PUBLISHED_VERSION} → ${RESOLVED_VERSION})，执行发布"
   fi
@@ -221,7 +232,7 @@ PRECHECK=$(npm view "${PACKAGE_NAME}@${RESOLVED_VERSION}" version --registry "$R
 PRECHECK_TRIMMED=$(printf '%s' "$PRECHECK" | tr -d '[:space:]')
 if [ "$PRECHECK_TRIMMED" = "$RESOLVED_VERSION" ]; then
   if [ "$FORCE" = true ]; then
-    echo ">> 当前版本已存在，但指定了 --force，继续尝试发布"
+    echo ">> 当前版本已存在于制品库，按覆盖策略继续发布（同名版本制品将被替换）"
   else
     # 线上已存在该版本：若指纹变了，绝不能静默跳过（因为新代码发布不出去）
     if [ -n "${CURRENT_FINGERPRINT}" ] && [ -n "${LAST_FINGERPRINT}" ] && [ "${CURRENT_FINGERPRINT}" != "${LAST_FINGERPRINT}" ]; then
@@ -290,7 +301,7 @@ fi
 
 ESCAPED_TOKEN="${AUTH_TOKEN//\//\\/}"
 if echo "$UPLOAD_OUTPUT" | grep -qE '409|Conflict|already exists|cannot overwrite'; then
-  echo "✘ 版本 ${RESOLVED_VERSION} 在制品库中已存在；SemVer 只增不覆盖，请递增版本"
+  echo "✘ 制品库拒绝覆盖版本 ${RESOLVED_VERSION}；请递增版本后重试，或确认该制品库已开启同名版本覆盖"
 else
   echo "$UPLOAD_OUTPUT" | sed "s/${ESCAPED_TOKEN}/*******/g"
 fi

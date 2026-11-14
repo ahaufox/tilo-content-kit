@@ -117,9 +117,15 @@
   margin-bottom: 0;
 }
 
-.tk-content strong {
+.tk-content strong,
+.tk-content b,
+.tk-editor strong,
+.tk-editor b,
+.tk-editor-content .ProseMirror strong,
+.tk-editor-content .ProseMirror b {
   color: var(--tk-text-main);
-  font-weight: 600;
+  font-weight: 700;
+  -webkit-text-stroke: 0.2px currentColor;
 }
 
 .tk-content em {
@@ -388,8 +394,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  padding: 4px 8px;
+  gap: 8px;
+  padding: 6px 12px;
+  min-height: 44px;
   border-bottom: 1px solid var(--tk-border);
   background: color-mix(in srgb, var(--tk-surface-low) 85%, transparent);
   backdrop-filter: blur(4px);
@@ -438,7 +445,7 @@
 .tk-toolbar--scroll .tk-toolbar-inner {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   flex-wrap: nowrap;
   flex-shrink: 0;
 }
@@ -460,14 +467,14 @@
   align-items: center;
   flex-wrap: wrap;
   row-gap: 4px;
-  column-gap: 2px;
+  column-gap: 3px;
 }
 
 /* 语义化功能按钮组：组内紧凑、组间整组换行，杜绝单个按钮破碎撕裂 */
 .tk-toolbar-group {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   flex-shrink: 0;
 }
 
@@ -486,11 +493,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: 0;
-  border-radius: var(--tk-radius-chip);
+  border-radius: 6px;
   background: transparent;
   color: var(--tk-text-body);
   cursor: pointer;
@@ -516,8 +523,8 @@
 
 .tk-toolbar-divider {
   width: 1px;
-  height: 16px;
-  margin: 0 4px;
+  height: 20px;
+  margin: 0 6px;
   background: var(--tk-border);
   flex-shrink: 0;
 }
@@ -526,9 +533,9 @@
 .tk-toolbar-table-actions {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px 4px;
-  margin-left: 2px;
+  gap: 3px;
+  padding: 2px 6px;
+  margin-left: 3px;
   border: 1px solid color-mix(in srgb, var(--tk-tertiary) 35%, transparent);
   border-radius: var(--tk-radius-chip);
   background: color-mix(in srgb, var(--tk-tertiary) 10%, transparent);
@@ -538,8 +545,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
   border-radius: var(--tk-radius-chip);
@@ -584,12 +591,12 @@
 .tk-color-swatches {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 
 .tk-color-swatch {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 9999px;
@@ -610,8 +617,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 20px;
-  padding: 0 6px;
+  height: 22px;
+  padding: 0 8px;
   border: 1px solid var(--tk-border);
   border-radius: var(--tk-radius-chip);
   background: var(--tk-surface-low);

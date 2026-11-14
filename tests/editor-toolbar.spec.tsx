@@ -237,4 +237,23 @@ describe('EditorToolbar', () => {
     expect(boldBtn.className).not.toContain('tk-toolbar-btn--active');
     expect(italicBtn.className).toContain('tk-toolbar-btn--active');
   });
+
+  it('导出的样式表正确包含升级后的舒适尺寸规范 (32px 按钮与 44px 工具栏)', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const cssPath = path.resolve(__dirname, '../dist/styles.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+
+    // 断言工具栏最小高度 44px 与舒适内边距
+    expect(cssContent).toContain('min-height: 44px;');
+    expect(cssContent).toContain('padding: 6px 12px;');
+
+    // 断言按钮升级至 32x32px
+    expect(cssContent).toContain('width: 32px;');
+    expect(cssContent).toContain('height: 32px;');
+
+    // 断言分割线与迷你按钮尺寸
+    expect(cssContent).toContain('height: 20px;');
+    expect(cssContent).toContain('width: 24px;');
+  });
 });

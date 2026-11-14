@@ -6,12 +6,12 @@
  */
 import type { SVGProps } from 'react';
 
-function BaseIcon({ children, ...props }: SVGProps<SVGSVGElement>) {
+function BaseIcon({ children, width = 15, height = 15, ...props }: SVGProps<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="14"
-      height="14"
+      width={width}
+      height={height}
       fill="none"
       stroke="currentColor"
       strokeWidth="2"

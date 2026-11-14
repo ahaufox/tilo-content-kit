@@ -170,6 +170,21 @@ turndownService.addRule('table', {
   },
 });
 
+// 保留行内文字颜色标注（核对提醒红色高亮）：HTML → Markdown 双轨存取不丢颜色语义，
+// 输出形如 <span style="color:red">原文</span>，供 Word 导出解析器映射为红色字体 Run
+turndownService.addRule('colorSpan', {
+  filter: function (node: HTMLElement) {
+    if (!node || node.nodeName.toUpperCase() !== 'SPAN') return false;
+    return /color\s*:/i.test((node as HTMLElement).getAttribute('style') || '');
+  },
+  replacement: function (content: string, node: HTMLElement | any) {
+    const style = (node as HTMLElement).getAttribute('style') || '';
+    const match = style.match(/color\s*:\s*([^;"']+)/i);
+    const color = match ? match[1].trim() : 'red';
+    return `<span style="color:${color}">${content}</span>`;
+  },
+});
+
 // 支持对齐属性的 Markdown 转换规则（转为公文标准的 <div align="..."> 容器）
 turndownService.addRule('alignedBlock', {
   filter: function (node: HTMLElement) {

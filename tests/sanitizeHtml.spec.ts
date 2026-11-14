@@ -122,7 +122,7 @@ describe('sanitizeHtml - 标签与属性白名单安全清洗', () => {
   });
 
   it('安全加固：剥离 style 与 id 全局属性，保留合法 class 等安全排版属性', () => {
-    const dirty = '<p id="malicious-anchor" style="position:fixed;top:0;color:red" class="doc-paragraph">正文内容</p>';
+    const dirty = '<p id="malicious-anchor" style="position:fixed;top:0" class="doc-paragraph">正文内容</p>';
     const clean = sanitizeHtml(dirty);
     expect(clean).toContain('class="doc-paragraph"');
     expect(clean).toContain('正文内容');
@@ -130,13 +130,22 @@ describe('sanitizeHtml - 标签与属性白名单安全清洗', () => {
     expect(clean).not.toContain('style=');
   });
 
-  it('放行受控排版安全样式（如 text-align: center/right），并剔除其余混入的非法样式', () => {
+  it('放行受控排版安全样式（text-align 与文字颜色 color），并剔除其余混入的非法样式', () => {
     const dirty = '<p style="position:fixed; text-align: center; color: red">居中标题</p><div style="text-align: right">具状人落款</div>';
     const clean = sanitizeHtml(dirty);
-    expect(clean).toContain('style="text-align: center"');
-    expect(clean).toContain('style="text-align: right"');
+    expect(clean).toContain('text-align: center');
+    expect(clean).toContain('text-align: right');
+    expect(clean).toContain('color: red');
     expect(clean).not.toContain('position');
-    expect(clean).not.toContain('color');
+  });
+
+  it('文字颜色白名单：放行合法色值，阻断函数式与非法色值注入', () => {
+    const dirty = '<span style="color: expression(alert(1))">x</span><span style="color:#FF0000">红</span><span style="color:rgb(255,0,0)">红2</span><span style="color:url(evil)">坏</span>';
+    const clean = sanitizeHtml(dirty);
+    expect(clean).toContain('color: #ff0000');
+    expect(clean).toContain('color: rgb(255,0,0)');
+    expect(clean).not.toContain('expression');
+    expect(clean).not.toContain('url');
   });
 
   it('无 DOMParser 极简环境安全退化：剥离 HTML 标签并转义为纯文本', () => {

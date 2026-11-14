@@ -27,7 +27,7 @@ const GLOBAL_ALLOWED_ATTRS = new Set([
 ]);
 
 /**
- * 校验并清洗内联 style 属性：仅保留排版安全的 CSS 规则（text-align 与 px 列宽），
+ * 校验并清洗内联 style 属性：仅保留排版安全的 CSS 规则（text-align、px 列宽与文字颜色），
  * 坚决剔除任何可疑函数、外部引用与定位注入。
  */
 function sanitizeStyle(styleValue: string): string {
@@ -50,6 +50,13 @@ function sanitizeStyle(styleValue: string): string {
     }
     if (prop === 'width' && /^\d+(\.\d+)?px$/.test(val)) {
       safeRules.push(`width: ${val}`);
+    }
+    // 文字颜色（核对提醒红色高亮等）：仅放行 hex / 命名色 / rgb(a) 数值色，杜绝函数式注入
+    if (
+      prop === 'color' &&
+      /^(#[0-9a-f]{3,8}|[a-z]+|rgba?\(\s*[\d.]+(\s*,\s*[\d.]+){0,3}\s*\))$/i.test(val)
+    ) {
+      safeRules.push(`color: ${val}`);
     }
   }
   return safeRules.join('; ');

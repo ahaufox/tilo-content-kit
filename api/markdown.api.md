@@ -2,7 +2,7 @@
 
 > 自动生成，请勿手改。刷新：`pnpm api:update`。校验：`pnpm api:check`。
 
-<!-- 类型摘要 sha256:6b1bd7f634f14f81 -->
+<!-- 类型摘要 sha256:20a93afbb6e2fbb8 -->
 
 ## 运行时导出符号
 
@@ -59,21 +59,6 @@ declare const defaultRemarkPlugins: (typeof remarkHtmlBreaks | typeof remarkGfm)
  * 通用 Markdown 预处理：规整表格后再交给具体宿主叠加业务预处理。
  */
 declare function preprocessMarkdown(text: string): string;
-
-/**
- * components — /markdown 默认元素映射（结构语义层，不含视觉类名）
- *
- * 方案 B 之后视觉全部由 `styles.css` 的 `.tk-content` 规则承担，本文件只保留
- * "必须改写 DOM 结构"的三处：
- *   1. table：套一层横向滚动容器（`tk-table-wrap`），否则宽表撑破版心；
- *   2. code/pre：react-markdown v10 不再提供 inline 标记，需按 AST 位置判定块级；
- *   3. a：强制 `target="_blank"` + `rel="noopener noreferrer"`。
- *
- * 其余元素（thead / tbody / tr / th / td / p / h1-h6 ...）一律使用默认渲染，
- * 由 CSS 按语义选择器着色，避免 SDK 与宿主各维护一份 class 清单。
- *
- * 业务化锚点（如 citation://）由宿主在 `components` 中覆盖 `a` 实现。
- */
 
 declare const defaultMarkdownComponents: Components;
 

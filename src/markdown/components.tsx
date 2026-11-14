@@ -23,7 +23,7 @@ const EXACT_BR_TEXT_REGEX = /^(?:<(?:br(?:\s+[^>]*)?\/?>|\/\s*br>)|&lt;(?:\/|\s*
  * 递归清洗并转换单元格子节点中的字面量 <br> 标签为原生 React <br /> 元素
  * 作为 remark 插件与预处理器的终极托底道防线，彻底杜绝任何裸露文本
  */
-export function renderCellChildren(children: React.ReactNode): React.ReactNode {
+function renderCellChildren(children: React.ReactNode): React.ReactNode {
   if (typeof children === 'string') {
     if (BR_TEXT_SPLIT_REGEX.test(children)) {
       const parts = children.split(BR_TEXT_SPLIT_REGEX);

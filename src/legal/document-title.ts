@@ -116,3 +116,50 @@ export function isLegalChapterHeading(line: string): boolean {
   return true;
 }
 
+/**
+ * 判断给定行文本是否为合法的公文三级小标题（例如「（一）借款事实证据」）
+ *
+ * 门禁规则（五重防误伤）：
+ *   1. 整行非空且首字符非 `#`；
+ *   2. 整行长度严格控制在 4 ~ 30 个字符内（小标题短小精炼，超过 30 字符多为事实陈述）；
+ *   3. 格式为 `^[（(]([一二三四五六七八九十百]{1,3})[）)](.+)$`；
+ *   4. 正文主体末尾排斥断句标点（`、，,；;：:。！？!?`）；
+ *   5. 正文主体内部排斥断句句号与分号（`[。；;]`，若含有则为事实阐述句子而非小标题）。
+ *
+ * @param line 单行文本
+ * @returns boolean
+ */
+export function isLegalSubSectionHeading(line: string): boolean {
+  const t = line.trim();
+  if (!t || t.startsWith('#')) {
+    return false;
+  }
+
+  // 整行 4~30 字符统一口径
+  if (t.length < 4 || t.length > 30) {
+    return false;
+  }
+
+  const match = /^[（(]([一二三四五六七八九十百]{1,3})[）)](.+)$/.exec(t);
+  if (!match) {
+    return false;
+  }
+
+  const body = match[2].trim();
+  if (!body) {
+    return false;
+  }
+
+  // 排斥句子末尾的断句标点
+  if (/[、，,；;：:。！？!?]$/.test(body)) {
+    return false;
+  }
+
+  // 排斥正文内包含断句句号或分号
+  if (/[。；;]/.test(body)) {
+    return false;
+  }
+
+  return true;
+}
+

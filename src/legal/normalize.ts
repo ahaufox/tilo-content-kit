@@ -7,7 +7,7 @@
  * 域约束：本文件属于中国法律文书域，与"通用内容能力"分属不同入口（/legal）。
  */
 import { boldLegalSectionHeadings } from './legal-section-headings';
-import { isLegalChapterHeading } from './document-title';
+import { isLegalChapterHeading, isLegalSubSectionHeading } from './document-title';
 
 /**
  * 规范化法律文书中的 Markdown 标记（修复粗体空格、Setext 标题被误食换行、复合标题与公文大写数字层级）
@@ -15,6 +15,9 @@ import { isLegalChapterHeading } from './document-title';
 export const normalizeLegalMarkdown = (content: string): string => {
   if (!content) return '';
   let text = content.trim();
+
+  // 自愈连续转义下划线（例如历史存量中由 turndown 误转义的 \_\_\_\_ 恢复为原生留白填空横线 ____）
+  text = text.replace(/(?:\\_){2,}/g, (m) => '_'.repeat(m.length / 2));
 
   // 若被 HTML 外壳（单段落或多段落 <p...>、<div...>）误包裹但本质是 Markdown，脱去外壳。
   // 带 align 排版属性或 text-align 样式的容器属于公文排版资产（标题居中/落款右对齐），先以占位符保护，
@@ -52,17 +55,19 @@ export const normalizeLegalMarkdown = (content: string): string => {
   // 2. 防止 Setext heading：在 --- 或 === 分割线前如果紧跟着文字且无空行，插入空行以确保解析为分割线而非二级标题
   text = text.replace(/([^\n])\n(---|\*\*\*|___)\s*$/gm, '$1\n\n$2');
 
-  // 3. 规范化公文大写数字层级标题（一、二、... 基于 isLegalChapterHeading 行级谓词精准提升为二级标题，彻底杜绝连续序数误伤；（一）（二）... 自动识别为三级公文小标题）
+  // 3. 规范化公文大写数字层级标题（一、二、... 基于 isLegalChapterHeading 行级谓词精准提升为二级标题，彻底杜绝连续序数误伤；（一）（二）... 基于 isLegalSubSectionHeading 行级谓词精准识别为三级公文小标题）
   text = text
     .split('\n')
     .map((line) => {
       if (isLegalChapterHeading(line)) {
         return `## ${line.trim()}`;
       }
+      if (isLegalSubSectionHeading(line)) {
+        return `### ${line.trim()}`;
+      }
       return line;
     })
     .join('\n');
-  text = text.replace(/(^|\n)(?!\s*#)\s*([（(][一二三四五六七八九十]+[）)][^\n]+)/g, '$1### $2');
 
   // 4. 规范化粗体内部末尾空格（例如 "**诉讼请求: **" -> "**诉讼请求:** "）
   // 必须只匹配水平空白 [^\S\n]，严禁匹配换行符

@@ -33,4 +33,17 @@ describe('htmlToMarkdown — 行内颜色标注保真', () => {
     expect(md).toContain('普通片段');
     expect(md).not.toContain('color');
   });
+
+  it('连续下划线留白填空横线严禁被无差别转义为反斜杠', () => {
+    const html = '<p>联系电话：______________________。</p>';
+    const md = htmlToMarkdown(html);
+    expect(md).toContain('联系电话：______________________。');
+    expect(md).not.toContain('\\_');
+  });
+
+  it('单个孤立下划线正常转义以避免触发斜体', () => {
+    const html = '<p>测试_下划线_内容</p>';
+    const md = htmlToMarkdown(html);
+    expect(md).toContain('测试\\_下划线\\_内容');
+  });
 });

@@ -2,13 +2,14 @@
 
 > 自动生成，请勿手改。刷新：`pnpm api:update`。校验：`pnpm api:check`。
 
-<!-- 类型摘要 sha256:ae95541fe2dcfbfc -->
+<!-- 类型摘要 sha256:7a8a5bf90446f97a -->
 
 ## 运行时导出符号
 
 - `CONTENT_KIT_VERSION`
 - `boldLegalSectionHeadings`
 - `isLegalChapterHeading`
+- `isLegalSubSectionHeading`
 - `legalSectionHeadingHtml`
 - `normalizeLegalMarkdown`
 - `stripLeadingDocumentTitle`
@@ -48,6 +49,20 @@ declare function stripLeadingDocumentTitle(content: string, documentTitle?: stri
  * @returns boolean
  */
 declare function isLegalChapterHeading(line: string): boolean;
+/**
+ * 判断给定行文本是否为合法的公文三级小标题（例如「（一）借款事实证据」）
+ *
+ * 门禁规则（五重防误伤）：
+ *   1. 整行非空且首字符非 `#`；
+ *   2. 整行长度严格控制在 4 ~ 30 个字符内（小标题短小精炼，超过 30 字符多为事实陈述）；
+ *   3. 格式为 `^[（(]([一二三四五六七八九十百]{1,3})[）)](.+)$`；
+ *   4. 正文主体末尾排斥断句标点（`、，,；;：:。！？!?`）；
+ *   5. 正文主体内部排斥断句句号与分号（`[。；;]`，若含有则为事实阐述句子而非小标题）。
+ *
+ * @param line 单行文本
+ * @returns boolean
+ */
+declare function isLegalSubSectionHeading(line: string): boolean;
 
 /**
  * 法定文书段落小标题加粗归一化（CNB #562 / #564）
@@ -70,5 +85,5 @@ declare function legalSectionHeadingHtml(text: string): string | null;
  */
 declare const normalizeLegalMarkdown: (content: string) => string;
 
-export { boldLegalSectionHeadings, isLegalChapterHeading, legalSectionHeadingHtml, normalizeLegalMarkdown, stripLeadingDocumentTitle };
+export { boldLegalSectionHeadings, isLegalChapterHeading, isLegalSubSectionHeading, legalSectionHeadingHtml, normalizeLegalMarkdown, stripLeadingDocumentTitle };
 ```

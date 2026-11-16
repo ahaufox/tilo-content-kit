@@ -148,6 +148,24 @@ const turndownService = new TurndownService({
   codeBlockStyle: 'fenced',
 });
 
+// 重写 escape：保护公文留白填空横线（连续 2 个及以上的下划线）不被无差别转义为 \_，仅对单个孤立下划线转义以避免触发 Markdown 斜体
+turndownService.escape = function (string: string) {
+  return string
+    .replace(/\\/g, '\\\\')
+    .replace(/\*/g, '\\*')
+    .replace(/^-/g, '\\-')
+    .replace(/^\+ /g, '\\+ ')
+    .replace(/^(=+)/g, '\\$1')
+    .replace(/^(#{1,6}) /g, '\\$1 ')
+    .replace(/`/g, '\\`')
+    .replace(/^~~~/g, '\\~~~')
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/^>/g, '\\>')
+    .replace(/(^|[^_])_(?!_)/g, '$1\\_')
+    .replace(/^(\d+)\. /g, '$1\\. ');
+};
+
 // 支持标准 Markdown 表格转换规则
 turndownService.addRule('table', {
   filter: 'table',

@@ -18,9 +18,17 @@ export function preprocessMarkdownTable(text: string): string {
   if (!text || typeof text !== 'string') return text;
   let result = text;
 
-  // 1. 修复粘连表格行：当行尾管道符与下一行行首管道符粘连（"| |" 或 "||"），识别并补充换行符 "\n|"
-  const tableRowGlueRegex = /\|\s*\|(?=\s*(?:[-:]{2,}|[^\n|]+)\s*\|)/g;
-  result = result.replace(tableRowGlueRegex, '|\n|');
+  // 1. 修复粘连表格行：
+  //    (a) 表头与分隔行粘连：如 '| col1 | col2 | | --- | --- |'
+  //    (b) 分隔行与数据行粘连：如 '| --- | --- | | val1 | val2 |'
+  //    (c) 连续无空格双管道符紧挨新单元格：如 '| a | b || c | d |'
+  //    注意：绝不能将同一行内的多个空单元格（如 '|  |  |  |'）误伤为换行！
+  // 1.a 表头行与分隔行粘连（分隔行特征：包含 [:-]{2,} 序列）
+  result = result.replace(/\|\s*\|(?=\s*[-:]{2,}\s*\|)/g, '|\n|');
+  // 1.b 分隔行与后续行粘连
+  result = result.replace(/(?<=\|\s*[-:]{2,}\s*)\|\s*\|(?=\s*[^-\n|])/g, '|\n|');
+  // 1.c 无空格紧挨的双竖线粘连（如 '|| a |' 或 '|| ---'）
+  result = result.replace(/\|\|(?=\s*(?:[-:]{2,}|[^\s|\n]))/g, '|\n|');
 
   // 2. 确保表格开头行之前（非表格行）且紧挨着文本时，补充空行以符合块级隔离规范
   result = result.replace(/([^\n|])\n(\|(?:\s*[^|\n]+\s*\|)+)/g, '$1\n\n$2');

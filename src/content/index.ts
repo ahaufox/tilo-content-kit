@@ -30,6 +30,7 @@ export {
 export {
   boldLegalSectionHeadings,
   isLegalChapterHeading,
+  isLegalSubSectionHeading,
   legalSectionHeadingHtml,
   normalizeLegalMarkdown,
   stripLeadingDocumentTitle,

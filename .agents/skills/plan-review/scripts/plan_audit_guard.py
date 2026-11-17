@@ -35,13 +35,24 @@ LINE_THRESHOLDS: Dict[str, Dict[str, Any]] = {
 
 
 def find_repo_root(start_path: Path) -> Path:
-    """自底向上查找 Git 仓库根目录"""
+    """自底向上查找 Git 仓库根目录。
+
+    `.git` 优先：子仓（如 frontend-v2）自带 `.git` 文件时即为其仓库根；
+    `.agents` 仅在没有 `.git` 的情况下作为兜底标记，避免规则/技能镜像目录导致提前返回。
+    """
     curr = start_path.resolve()
+    agents_hit: Path | None = None
     while curr != curr.parent:
-        if (curr / ".git").exists() or (curr / ".agents").exists():
+        if (curr / ".git").exists():
             return curr
+        if agents_hit is None and (curr / ".agents").exists():
+            agents_hit = curr
         curr = curr.parent
-    return start_path.resolve()
+    return agents_hit if agents_hit is not None else start_path.resolve()
+
+
+# 已知子仓名（用于路径剥离与候选基址推导）
+SUBREPO_NAMES = ("frontend-v2", "tilo-backend-app", "tilo-core-engine", "admin-frontend", "prod-dev-ops")
 
 
 def count_file_lines(file_path: Path) -> int:
@@ -55,39 +66,85 @@ def count_file_lines(file_path: Path) -> int:
         return 0
 
 
+def _candidate_bases(repo_root: Path) -> List[Path]:
+    """候选解析基址：仓库根 → 主仓根（父目录）→ 各子仓根 → SDK 子仓根。"""
+    bases: List[Path] = [repo_root]
+    parent = repo_root.parent
+    if parent != repo_root:
+        bases.append(parent)
+    for name in SUBREPO_NAMES:
+        child = repo_root / name
+        if child.is_dir():
+            bases.append(child)
+    for sdk_root in (repo_root / "sdks", parent / "sdks"):
+        if sdk_root.is_dir():
+            for sdk_child in sorted(sdk_root.iterdir()):
+                if sdk_child.is_dir():
+                    bases.append(sdk_child)
+    return bases
+
+
+def _resolve_referenced_path(raw: str, repo_root: Path) -> Tuple[str, Path]:
+    """在候选基址下解析引用路径，返回 (门禁判定用相对路径, 绝对路径)。
+
+    兼容两种书写形态：
+      - 主仓写法 `frontend-v2/src/...`
+      - 子仓写法 `src/...`（相对 frontend-v2 仓库根）
+    """
+    raw_l = raw.lstrip("/")
+    parts = Path(raw_l).parts
+    stripped: str | None = None
+    if parts and parts[0] in SUBREPO_NAMES:
+        stripped = str(Path(*parts[1:]))
+
+    fallback: Tuple[str, Path] | None = None
+    for base in _candidate_bases(repo_root):
+        for rel in ([raw_l] + ([stripped] if stripped else [])):
+            abs_path = base / rel
+            if abs_path.is_file():
+                resolved = abs_path.resolve()
+                try:
+                    rel_out = str(resolved.relative_to(repo_root))
+                except ValueError:
+                    rel_out = rel
+                return rel_out, resolved
+            if fallback is None:
+                fallback = (rel, abs_path)
+    return fallback if fallback is not None else (raw_l, repo_root / raw_l)
+
+
 def extract_referenced_code_paths(content: str, repo_root: Path) -> List[Tuple[str, Path]]:
-    """从方案文档中通过正则提取提及的源码文件路径"""
+    """从方案文档中通过正则提取提及的源码文件路径。
+
+    路径书写形态兼容：
+      - 主仓写法 `frontend-v2/src/...`、`tilo-backend-app/backend/...`
+      - 子仓写法 `src/...`、`tests/...`、`sdks/...`
+    """
     results = []
     seen = set()
 
     pattern = re.compile(
         r"""(?x)
-        (?:(?:file://)?/?[a-zA-Z0-9_\-\./]+(?:frontend-v2|tilo-backend-app|backend|tilo-core-engine)/[a-zA-Z0-9_\-\./]+\.[a-zA-Z0-9]+)|
-        (?:`(?:frontend-v2|tilo-backend-app|backend|tilo-core-engine)/[a-zA-Z0-9_\-\./]+\.[a-zA-Z0-9]+`)|
-        (?:\[.*?\]\(((?:frontend-v2|tilo-backend-app|backend|tilo-core-engine)/[a-zA-Z0-9_\-\./]+\.[a-zA-Z0-9]+)\))
+        (?P<path>
+            (?:file://)?/?[a-zA-Z0-9_\-\./]*
+            (?:frontend-v2|tilo-backend-app|backend|tilo-core-engine|admin-frontend|prod-dev-ops)
+            /[a-zA-Z0-9_\-\./]+\.[a-zA-Z0-9]+
+          |
+            (?:src|tests|sdks|scripts)/[a-zA-Z0-9_\-\./]+\.[a-zA-Z0-9]+
+        )
         """
     )
 
     for match in pattern.finditer(content):
-        raw = match.group(0).strip("`").strip()
-        link_m = re.match(r"\[.*?\]\((.*?)\)", raw)
-        if link_m:
-            raw = link_m.group(1)
+        raw = match.group("path").strip("`").strip()
         raw = raw.replace("file://", "")
-        try:
-            p = Path(raw)
-            if p.is_absolute():
-                if str(p).startswith(str(repo_root)):
-                    p = p.relative_to(repo_root)
-            raw_str = str(p).lstrip("/")
-        except Exception:
-            raw_str = raw
 
-        if any(raw_str.endswith(ext) for ext in [".ts", ".tsx", ".py", ".js", ".jsx", ".css", ".sql"]):
-            if raw_str not in seen:
-                seen.add(raw_str)
-                abs_path = (repo_root / raw_str).resolve()
-                results.append((raw_str, abs_path))
+        rel_str, abs_path = _resolve_referenced_path(raw, repo_root)
+
+        if any(rel_str.endswith(ext) for ext in [".ts", ".tsx", ".py", ".js", ".jsx", ".css", ".sql"]):
+            if rel_str not in seen:
+                seen.add(rel_str)
+                results.append((rel_str, abs_path))
 
     return results
 

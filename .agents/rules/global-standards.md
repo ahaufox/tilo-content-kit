@@ -70,7 +70,7 @@ trigger: always_on
   - `bash dev-ops/mac-local.sh backend [-c]` — 前台启动业务后端（`-c` 联动核心研判引擎）；
   - `bash dev-ops/mac-local.sh frontend` — 前台启动用户前端 Next.js；
   - `bash dev-ops/mac-local.sh admin` — 构建管理后台静态产物；
-  - `bash dev-ops/mac-local.sh all` — 一键后台拉起核心引擎 + 后端 + 前端并统一管理，日志归档至 `logs/mac-local/<YYYYMMDD>/`。
+  - `bash dev-ops/mac-local.sh all` — 一键后台拉起核心引擎 + 后端 + 前端并统一管理，日志归档至 `logs/mac-local/<YYYYMMDD>/<HH>/`。
   - 本机私有配置 `.env.local`（不随 git 同步）缺失时自动从 `.env.local.example` 初始化；代理排查项 `/var/log/nginx/error.log` 在 macOS 本机不适用，验收说明中应客观标注"不适用"，不得作为未完成项记录。
 - **Linux dev 栈**：具备 Nginx 反代环境（test.mateai.work:441 → FRP → Nginx，端口段 8xxx），启动使用 `dev-ops/` 下的标准脚本（`dev-deploy.sh` 部署基础底座、`core-engine.sh`、`backend.sh [-c]`、`frontend.sh`、`admin.sh`）；代理与网络路由问题按 §6 检查 `/var/log/nginx/error.log`。
 - **判断依据**：按 `uname -s` 与实际部署形态选择启动链路；涉及 Nginx、FRP、域名反代的验证步骤仅在 Linux dev 栈执行，macOS 本机以 127.0.0.1 直连端口为准。

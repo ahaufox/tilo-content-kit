@@ -69,6 +69,17 @@ globs: "*"
 - **常量抽取与调用点全面替换**：检查抽取公共常量（如 `ABSTRACT_CRITIQUE_PATTERN`）后是否全局替换了所有内联调用，检查正则表达式语义与修饰符是否保持严格一致。
 - **设计模型与实现双向对齐、提交范围收敛**：审查规格文档（`spec.md` / `data-model.md` / `plan.md`）中的字段与阈值是否由真实代码反推；审查提交内容是否严格限定在任务清单范围内，严防清单外改动或全局配置文件（如 `pytest.ini` 全局 `addopts`）无意识混入。
 
+### 5.4 修复复核证据（514 复盘：双向对称契约、案情版本化 Schema、反向最小暴露面与专线强类型反序列化）
+
+- **Backend 内部专线 OpenAPI 独立导出与版本解耦**：核验 `generate_openapi.py` 是否独立抽取 `/api/v1/internal/*` 导出 `contracts/openapi-backend-internal.json` 与独立快照（`resolve_internal_contract_version`），严禁复用对外发布 tag 导致版本锁死或覆盖快照；
+- **反向最小暴露面核查（防 internal 泄漏）**：核查 `openapi_config.py` 分支是否严格排除了 `/api/v1/internal/*` 路由，核验断言测试（`openapi-frontend.json` 与 `openapi-full.json` 零 internal 路径泄漏）；
+- **案情 Schema 版本化同构与事实复用**：核查 `CaseBaselinePayloadV1` 与持久化 DTO `EstablishedBaseline` 是否同构（`parties` 原始主体字典保留主体地位、`procedural_history`），核查 `CaseFactsEnvelopeV1` 是否直接复用专案 162 `SemanticFact` 作为 SSOT；
+- **版本字段语义隔离与三处声明 `Literal["1.0"]`**：核验 `case_schema_version` 是否与 API 层 `x-contract-version` 语义隔离；核验 backend / core-engine / core SDK 三处模型均严格声明为 `Literal["1.0"]`，严禁在后续增量专案落地前自造 2.0 模型与协商分支；
+- **三处强类型契约同构门禁**：核查 `EngineExecutionRequest` 在 backend、core-engine 及 core SDK 三处的定义字段是否 100% 同构，通过 `check_contract_compat.sh` 脚本门禁核验，防 `extra="ignore"` 静默丢字段；
+- **回填判型与严禁裸 except**：审查 `EngineExecutionRequest` 的回填 validator 是否做 `isinstance(raw, dict)` 判型，是否捕获 `ValidationError` 记 warning 保留 `None`，严禁 bare `except`；
+- **Core-Engine 客户端消灭裸字典直读**：审查 `internal_data_rpc.py` 是否使用强类型 Pydantic 模型（`CauseCandidatesResponse`、`StatuteAstGroundResponse`）入站反序列化校验，是否仅捕获 `ValidationError` 走既有兜底；
+- **引擎消费闭环与端到端往返验证**：审查 `core_engine_service/runner/adapter.py` 是否将 `request.baseline_payload` 转换为字典合并进 `established_baseline`，是否将 `facts_envelope` 转换为 `case_facts`；核验「backend 序列化 → engine 反序列化 → adapter 合并 → formatter 可见」往返测试，确保字段不丢、键名保持 `snake_case`。
+
 ## 6. 核心负向约束 (Hard Constraints)
 - **禁止裸露异常**: 严禁在 Python 中使用 `except:` 或 `except Exception: pass`。
 - **禁止 URI 动词**: 严禁在 API 路径中包含动作谓词。

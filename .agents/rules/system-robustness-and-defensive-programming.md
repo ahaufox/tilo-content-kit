@@ -145,7 +145,13 @@ trigger: always_on
 - **调用点全面替换**：从局部逻辑或循环中抽取公共常量（如 `ABSTRACT_CRITIQUE_PATTERN`）或校验规则时，必须全局替换所有既有的内联硬编码，严禁只定义常量却未在实际调用点引用，导致常量形同虚设。
 - **修饰符与量词语义对齐**：抽取正则常量时，必须仔细核对量词与修饰符（如末尾量词 `?` 的取舍），防止常量抽离过程中无意放宽或收紧匹配语义，进而引发规则误杀或漏杀。
 
-## 19. 相关技能 (Related Skills)
+## 19. 跨微服务契约回填判型、三处同构与专线强类型反序列化防呆 (514 专案规范)
+
+- **回填判型与严禁裸 except (红线)**：跨微服务请求模型（如 `EngineExecutionRequest`）在实现向后兼容的防御性回填 validator（从 `global_ctx` 回填强类型载荷 `baseline_payload`）时，必须显式对中间和嵌套字典做 `isinstance(raw, dict)` 判型，严禁对非 dict 对象调用 `.get()`；调用 Pydantic 构造时必须精准捕获 `ValidationError`，使用 `logger.warning` 留存上下文并保留 `None`（交由下游既有降级处理），严禁使用 bare `except:` 或宽泛 `except Exception: pass` 静默掩盖结构破坏或字段类型错误。
+- **跨仓三处强类型契约同构门禁 (防 `extra="ignore"` 埋雷)**：核心请求契约在多微服务或 SDK（如 `tilo-backend-app`、`tilo-core-engine`、`sdks/tilo-core-sdk`）跨仓重复定义时，字段声明必须保持 100% 严格同构；接收端若配置了 `model_config = ConfigDict(extra="ignore")`，新字段未声明将导致数据在网络反序列化时被无声无息丢弃。必须通过自动化门禁脚本（`check_contract_compat.sh`）对三处源码模型的字段定义执行静态一致性比对。
+- **内部专线客户端入站强类型反序列化**：客户端（如 `internal_data_rpc.py`）消费服务端响应时，严禁使用裸字典直接消费 `resp.json()`。必须立即进行 Pydantic 模型的入站校验（`model_validate`），仅捕获 `ValidationError`，确保在契约边界即时捕获字段缺失或格式变异并触发兜底，防止错误向推理层和 Prompt 格式化层扩散。
+
+## 20. 相关技能 (Related Skills)
 
 - **`tdd`**：LLM 边界容错单测覆盖。
 - **`e2e-testing`**：跨组件与全链路交互端到端回归。

@@ -38,6 +38,17 @@ trigger: always_on
 - **强类型独治**: 前端严禁手写 API 响应 interface，必须从生成类型导入；禁止在业务层手动写 `snake_case ↔ camelCase` 映射，统一收敛在 Schema 基类（`CamelCaseBaseModel`）或 `lib/normalize/`。
 - **Pydantic model_dump() 键命名契约**: 请求模型（如 `UIStateRequest`）经 Pydantic `model_dump()` 转换为字典后，其键名统一且唯一为 Python 字段标准命名（`snake_case`，如 `selected_node_key`）。业务服务层（如 `intent_compiler.py`）、Agent 与 Handler 读取该字典时**必须严格且唯一使用 `snake_case`（如 `ui_state.get("selected_node_key")`）**，严禁做 `camelCase`（如 `selectedNodeKey`）双向冗余兼容，彻底杜绝键名混淆导致的隐性 `None`。
 - **严禁静态节点意图匹配器**: 工作流节点的执行调度必须严格依赖上下文强契约（`selected_node_key` / `target_node_key`）或模型 Tool-Calling 动态识别，**严禁在代码中维护 `node_matcher` 或针对工作流节点的正则表达式/文本字典映射表**。坚决杜绝此类硬编码引入的沉重维护负担与潜在分叉。
+- **双向对称契约与 Backend 内部专线 SSOT (514 专案)**:
+  - **契约对称化治理**: 核心研判引擎对外具备标准契约，业务后端向核心引擎提供的内部专线接口（`/api/v1/internal/*`）同样必须作为一等公民契约治理，统一由 `generate_openapi.py` 提取导出 `contracts/openapi-backend-internal.json` 与版本快照，作为引擎消费后端数据的唯一 SSOT。
+  - **反向最小暴露面 (红线)**: 对外客户端契约（`openapi-frontend.json`）与特权全量契约（`openapi-full.json`）严禁包含任何 `/api/v1/internal/*` 内部专线端点，由 `openapi_config.py` 严格过滤排除并加自动化导出断言测试门禁。
+  - **内部专线鉴权**: 所有 `/api/v1/internal/*` 路由统一挂载 `Depends(verify_internal_service_token)` 守卫，强校验请求头 `X-Internal-Token`。
+  - **内部契约版本解耦**: 内部契约快照版本通过 `resolve_internal_contract_version` 独立解析，禁止复用对外发布 tag，避免对外发版节奏锁死内部契约演进或覆盖同名快照。
+- **跨微服务案情生命周期版本化强类型 Schema (514 专案)**:
+  - **强类型同构契约**: 案情基准要素采用强类型 `CaseBaselinePayloadV1`（与 `EstablishedBaseline` 严格同构，`parties: Dict[str, Any]` 保留主体地位与 `procedural_history`，严禁拆成平行列表导致主体地位丢失）；结构化事实信封采用 `CaseFactsEnvelopeV1`（直接复用专案 162 `SemanticFact` 作为 SSOT，严禁另立平行模型）。
+  - **版本字段语义隔离与单版本声明**: `EngineExecutionRequest.case_schema_version` 仅声明案情载荷 Schema 版本，与 API/HTTP 层 `x-contract-version` 语义严格隔离。当前仅 V1，在 backend、core-engine、core SDK 三处统一声明为 `Literal["1.0"]`，在后续增量专案落地前严禁自造 2.0 模型或协商分支。
+  - **三处同构门禁**: `EngineExecutionRequest` 在 backend、core-engine 及 core SDK 三处的定义字段必须 100% 同构，受 `check_contract_compat.sh` 脚本门禁审计，严禁因 `extra="ignore"` 静默丢弃新字段。
+  - **防御性回填判型**: 未显式传参时从 `global_ctx` 回填必须 `isinstance(raw, dict)` 判型，捕获 `ValidationError` 记 warning 保留 `None`，严禁 bare `except Exception: pass`。
+  - **消灭 Core-Engine 裸字典直读**: 核心引擎消费内部专线（`/statute/cause-candidates`、`/statute/ast-ground` 等）时，禁止手写裸字典消费 `resp.json()`，必须通过入站 Pydantic 模型反序列化校验。
 
 ## 6. 环境日志检查强制门禁
 在功能实现、联调与排错中，标记任务完成前**必须检查相关环境报错日志**：

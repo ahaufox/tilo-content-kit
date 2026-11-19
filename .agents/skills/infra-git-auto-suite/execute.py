@@ -117,7 +117,15 @@ def classify_domain(filepath: str) -> str:
     elif p.startswith("/"):
         p = p[1:]
 
-    # 1. 数据库模型、迁移脚本、仓储层与关系字典 (backend_db)
+    # 1. Agent 规则、技能与指令基建 (agent_infra)
+    if p.startswith(".agents/") or p == ".agents" or p in ("AGENTS.md", "GEMINI.md"):
+        return "agent_infra"
+
+    # 2. 独立文档与待办规划 (docs)
+    if p.startswith("docs/") or p.endswith(".md"):
+        return "docs"
+
+    # 3. 数据库模型、迁移脚本、仓储层与关系字典 (backend_db)
     if (
         p.startswith("backend/models/")
         or p.startswith("backend/alembic/")
@@ -125,14 +133,6 @@ def classify_domain(filepath: str) -> str:
         or p.startswith("sqls/")
     ):
         return "backend_db"
-
-    # 2. Agent 规则、技能与指令基建 (agent_infra)
-    if p.startswith(".agents/") or p == ".agents" or p in ("AGENTS.md", "GEMINI.md"):
-        return "agent_infra"
-
-    # 3. 独立文档与待办规划 (docs)
-    if p.startswith("docs/") or p.endswith(".md"):
-        return "docs"
 
     # 4. 后端核心服务、路由、Agent 与模式定义 (backend_core)
     if p.startswith("backend/"):

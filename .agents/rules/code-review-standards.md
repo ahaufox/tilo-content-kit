@@ -80,6 +80,11 @@ globs: "*"
 - **Core-Engine 客户端消灭裸字典直读**：审查 `internal_data_rpc.py` 是否使用强类型 Pydantic 模型（`CauseCandidatesResponse`、`StatuteAstGroundResponse`）入站反序列化校验，是否仅捕获 `ValidationError` 走既有兜底；
 - **引擎消费闭环与端到端往返验证**：审查 `core_engine_service/runner/adapter.py` 是否将 `request.baseline_payload` 转换为字典合并进 `established_baseline`，是否将 `facts_envelope` 转换为 `case_facts`；核验「backend 序列化 → engine 反序列化 → adapter 合并 → formatter 可见」往返测试，确保字段不丢、键名保持 `snake_case`。
 
+### 5.5 LLM 返回内容测试审查门禁 (Live LLM 真实测试与 3 次稳定性凭据)
+
+- **核验真实模型调用凭据**：凡涉及 Prompt 配方、智能体推理决策逻辑、公文/文书正文生成或模型结构化解析的代码变更，审查时必须核验测试凭据中是否包含 Live LLM 真实调用的命令输出与日志记录，严禁接受仅用纯 Mock 伪造绿灯的通过结论；
+- **核验 3 次稳定性测试记录**：审查测试记录是否至少完整执行了 3 次（$N \ge 3$），核验各轮次在 XML/JSON 语法结构、必填要素提取完整度及事实一致性上是否保持稳定收敛，出现任何 1 次格式异常或崩溃均不得判定审查通过。
+
 ## 6. 核心负向约束 (Hard Constraints)
 - **禁止裸露异常**: 严禁在 Python 中使用 `except:` 或 `except Exception: pass`。
 - **禁止 URI 动词**: 严禁在 API 路径中包含动作谓词。

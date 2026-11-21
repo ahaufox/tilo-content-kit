@@ -32,6 +32,8 @@ export interface RichEditorProps {
   onCancelShortcut?: () => void;
   className?: string;
   editorClassName?: string;
+  /** 外层容器自定义内联样式（支持直接覆盖 CSS Token，如 --tk-radius-block） */
+  style?: React.CSSProperties;
   textColors?: ColorOption[];
   highlightColors?: ColorOption[];
   extensions?: any[];
@@ -56,6 +58,10 @@ export interface RichEditorProps {
   renderFooter?: (editor: Editor) => React.ReactNode;
 }
 
+function getEditorCharCount(ed: Editor): number {
+  return ed.getText({ blockSeparator: '' }).length;
+}
+
 export function RichEditor({
   value = '',
   onChange,
@@ -70,6 +76,7 @@ export function RichEditor({
   onCancelShortcut,
   className = '',
   editorClassName = '',
+  style,
   textColors,
   highlightColors,
   extensions,
@@ -127,7 +134,7 @@ export function RichEditor({
     content: ensureHtml(value || ''),
     onCreate: ({ editor: initialEditor }) => {
       if (showFooterRef.current) {
-        setCharCount(initialEditor.getText().length);
+        setCharCount(getEditorCharCount(initialEditor));
       }
     },
     editorProps: {
@@ -163,7 +170,7 @@ export function RichEditor({
       const md = htmlToMarkdown(html);
       lastSyncedValueRef.current = md;
       if (showFooterRef.current) {
-        setCharCount(currentEditor.getText().length);
+        setCharCount(getEditorCharCount(currentEditor));
       }
 
       onChange?.(md);
@@ -198,7 +205,7 @@ export function RichEditor({
       lastSyncedValueRef.current = value || '';
       editor.commands.setContent(ensureHtml(value || ''));
       if (showFooterRef.current) {
-        setCharCount(editor.getText().length);
+        setCharCount(getEditorCharCount(editor));
       }
     }
   }, [editor, value]);
@@ -224,7 +231,7 @@ export function RichEditor({
             const cleanMd = htmlToMarkdown(editor.getHTML());
             lastSyncedValueRef.current = cleanMd;
             if (showFooterRef.current) {
-              setCharCount(editor.getText().length);
+              setCharCount(getEditorCharCount(editor));
             }
             onChange?.(cleanMd);
             onChangeHtml?.(editor.getHTML());
@@ -269,6 +276,7 @@ export function RichEditor({
   return (
     <div
       ref={containerRef}
+      style={style}
       data-testid={dataTestId}
       className={boxClasses}
     >
@@ -341,7 +349,7 @@ export function RichEditor({
               editor.commands.setContent(ensureHtml(nextVal), { emitUpdate: false });
               lastSyncedValueRef.current = nextVal;
               if (showFooterRef.current) {
-                setCharCount(editor.getText().length);
+                setCharCount(getEditorCharCount(editor));
               }
               onChange?.(nextVal);
               onChangeHtml?.(editor.getHTML());

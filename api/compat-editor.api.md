@@ -2,7 +2,7 @@
 
 > 自动生成，请勿手改。刷新：`pnpm api:update`。校验：`pnpm api:check`。
 
-<!-- 类型摘要 sha256:648b2f193365afd6 -->
+<!-- 类型摘要 sha256:da1c04ea4bf0e8be -->
 
 ## 运行时导出符号
 
@@ -84,6 +84,8 @@ interface RichEditorProps {
     onCancelShortcut?: () => void;
     className?: string;
     editorClassName?: string;
+    /** 外层容器自定义内联样式（支持直接覆盖 CSS Token，如 --tk-radius-block） */
+    style?: React__default.CSSProperties;
     textColors?: ColorOption[];
     highlightColors?: ColorOption[];
     extensions?: any[];
@@ -107,7 +109,7 @@ interface RichEditorProps {
     /** 自定义底部栏渲染函数 */
     renderFooter?: (editor: Editor) => React__default.ReactNode;
 }
-declare function RichEditor({ value, onChange, onChangeHtml, placeholder, disabled, autoFocus, showToolbar, toolbarDataTestId, extraToolbarActions, onSaveShortcut, onCancelShortcut, className, editorClassName, textColors, highlightColors, extensions, extensionOptions, dataTestId, multilineToolbar, showTableBubbleMenu, heightMode, minHeight, isDragging, renderHiddenTextarea, showFooter, tipsText, renderFooter, }: RichEditorProps): React__default.JSX.Element;
+declare function RichEditor({ value, onChange, onChangeHtml, placeholder, disabled, autoFocus, showToolbar, toolbarDataTestId, extraToolbarActions, onSaveShortcut, onCancelShortcut, className, editorClassName, style, textColors, highlightColors, extensions, extensionOptions, dataTestId, multilineToolbar, showTableBubbleMenu, heightMode, minHeight, isDragging, renderHiddenTextarea, showFooter, tipsText, renderFooter, }: RichEditorProps): React__default.JSX.Element;
 
 /**
  * EditorToolbar — 标准纯净富文本格式化工具栏组件

@@ -16,7 +16,8 @@
   - 新增 `TableBubbleMenu` 表格浮动上下文菜单：内置原生 SVG 图标（上插行、下插行、删行、左插列、右插列、删列、删表），支持光标进入表格单元格时自适应浮出，消费随包 `--tk-*` 设计变量；
   - `RichEditor` 支持参考开关 `showTableBubbleMenu?: boolean`（默认 `true`），调用方可自由配置开启或彻底关断气泡菜单；
   - `RichEditor` 扩展高度排版模式（`heightMode: 'full' | 'auto' | 'fixed'` 与 `minHeight`），支持弹性撑满父容器与自适应高度切换；
-  - `RichEditor` 扩展 `isDragging` 拖拽高亮态感知与 `renderHiddenTextarea` 无障碍表单桥接；
+  - `RichEditor` 支持 `style?: React.CSSProperties` 属性透传，允许宿主直接注入 CSS Token 覆盖（如 `--tk-radius-block`）；
+  - `RichEditor` 扩展 `isDragging` 拖拽高亮态感知与 `renderHiddenTextarea` 原生表单/测试桥接；
   - 外层容器挂载 DOM `value` 存取器描述符，保障单测 `fireEvent.change` 与原生表单直接驱动；
   - 导出对齐：`/editor` 与 `/tiptap` 双入口同步导出 `TableBubbleMenu` 及相关契约类型；
   - Demo 页面同步更新：新增表格气泡菜单开关（开启/关闭）交互演示与代码示例。
@@ -24,9 +25,9 @@
 ### 修复
 
 - **富文本基座只读态、底栏统计、高度模式、样式特异性、DOM 赋值与交互加固（`RichEditor` / `styles`）**：
-  - **只读态交互修复 (B1)**：移除 `.tk-editor-box--disabled` 的 `opacity: 0.65; pointer-events: none;`，改为 `cursor: default` 并对内部编辑区保留 `cursor: text; user-select: text;`，使只读态/预览渲染器文本仍可正常高亮选中、复制与滚动；
-  - **底栏与字数统计口径与门控 (H1 / N2)**：`RichEditorProps` 补齐 `tipsText?: string;`，在 `showFooter=true` 且未提供自定义 `renderFooter` 时，默认渲染左侧 `tipsText` 与右侧 `{charCount} 字`（带 `data-testid` 守卫）；首屏字数统一基于纯文本计算，且在 `showFooter=false` 时完全关闭字数统计避免无谓重渲染；
-  - **固定高度模型落地 (H2)**：落地 `heightMode="fixed"` 对应的 `.tk-editor-box--fixed` 与 `.tk-editor-area--fixed`，内联注入 `height: minHeightStyle; overflowY: 'auto'`，杜绝退化为默认样式；
+  - **只读态交互修复与全量静态强审计 (B1 / N1)**：移除 `.tk-editor-box--disabled` 的 `opacity: 0.65; pointer-events: none;`，改为 `cursor: default` 并对内部编辑区保留 `cursor: text; user-select: text;`，使只读态/预览渲染器文本仍可正常高亮选中、复制与滚动；静态单测全面扫描所有含 `--disabled` 的规则（含嵌套与后代选择器），严禁引入 `pointer-events: none` 或 `opacity:` 降级；
+  - **底栏与字数统计口径与门控 (H1 / N2)**：`RichEditorProps` 补齐 `tipsText?: string;`，在 `showFooter=true` 且未提供自定义 `renderFooter` 时，默认渲染左侧 `tipsText` 与右侧 `{charCount} 字`（带 `data-testid` 守卫）；字数统一基于 `getText({ blockSeparator: '' })` 纯文本计算，消除块级换行符虚占字数，且在 `showFooter=false` 时完全关闭字数统计避免无谓重渲染；
+  - **固定高度模型落地与内联高度/滚动守护 (H2)**：落地 `heightMode="fixed"` 对应的 `.tk-editor-box--fixed` 与 `.tk-editor-area--fixed`，内联注入 `height: minHeightStyle; overflowY: 'auto'`，双端单测强化校验内联高度与滚动属性，杜绝退化为默认样式；
   - **CSS 特异性全面降级 (W6)**：将 `.tk-content` / `.tk-editor-content` 的默认排版标签规则（含标题、段落、列表、表格、代码块及链接）全面收敛至 `:where(.tk-content, .tk-editor-content)`，将选择器特异性降至 `(0, 0, 1)`，使宿主 Tailwind prose 样式（如 `prose-h1:text-xl` 即 `(0, 1, 0)`）能够精准覆盖，解决样式优先级倒置；
   - **DOM value 存取器单次分发、实时 getter 与桥接直通 (W1 / N3 / N4)**：拦截初次挂载时内部无操作的 `onUpdate` 触发（首发静默）；`setter` 显式关断内部 update，由统一出口单次下发清洗后的 Markdown；隐藏 textarea 保持原生 Markdown 直通分发（杜绝 Turndown 破坏性断行）；`setter` 与隐藏 textarea 统一同步触发 `onChangeHtml`；`getter` 实时动态计算 Markdown；
   - **空白区聚焦与占位符匹配 (S1 / S4)**：在 `.tk-editor-area` 空白区点击时自动触发编辑器聚焦；修正占位符选择器匹配规则为 `:where(.tk-editor-content).ProseMirror p.is-editor-empty:first-child::before`。

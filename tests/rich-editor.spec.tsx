@@ -59,24 +59,36 @@ describe('RichEditor', () => {
     expect(screen.getByText('版本 2：案情已更新')).toBeTruthy();
   });
 
-  it('B1 强校验：源码样式与运行时确保 disabled 态绝不包含 pointer-events:none 或 opacity 降级，文本可自由选择', () => {
-    // 1. 物理样式源码静态强审计：读取 index.css，断言 .tk-editor-box--disabled 规则块绝对不含破坏交互的属性
+  it('B1/N1 强校验：源码静态强审计全量覆盖所有 disabled 规则（含嵌套规则），确保绝无 pointer-events:none 或 opacity 降级', () => {
+    // 1. 物理样式源码静态强审计：读取 index.css，全量扫描所有含 --disabled 的规则块
     const cssPath = path.resolve(__dirname, '../src/styles/index.css');
     const cssContent = fs.readFileSync(cssPath, 'utf-8');
 
-    // 匹配 .tk-editor-box--disabled 的样式定义块
-    const disabledRuleMatch = cssContent.match(/\.tk-editor-box--disabled\s*\{([^}]+)\}/);
-    expect(disabledRuleMatch).toBeTruthy();
-    const disabledRuleBody = disabledRuleMatch![1];
+    // 匹配所有包含 --disabled 的规则块
+    const disabledRulesRegex = /([^{}]*--disabled[^{}]*)\{([^}]+)\}/g;
+    let match;
+    const foundRules: Array<{ selector: string; body: string }> = [];
+    while ((match = disabledRulesRegex.exec(cssContent)) !== null) {
+      foundRules.push({ selector: match[1].trim(), body: match[2].trim() });
+    }
 
-    // 严禁包含 pointer-events: none 或 opacity 降低
-    expect(disabledRuleBody).not.toContain('pointer-events: none');
-    expect(disabledRuleBody).not.toContain('opacity:');
-    expect(disabledRuleBody).toContain('cursor: default');
+    expect(foundRules.length).toBeGreaterThan(0);
 
-    // 内部编辑区必须显式声明文字可选择与文本光标
-    expect(cssContent).toMatch(/\.tk-editor-box--disabled\s+\.ProseMirror\s*\{[^}]*user-select:\s*text/);
-    expect(cssContent).toMatch(/\.tk-editor-box--disabled\s+\.ProseMirror\s*\{[^}]*cursor:\s*text/);
+    // 强化审计：所有 disabled 规则（基础规则 + 嵌套后代规则）绝不能包含 pointer-events: none 或 opacity 降低
+    for (const rule of foundRules) {
+      expect(rule.body, `选择器 "${rule.selector}" 违规包含 pointer-events: none`).not.toContain('pointer-events: none');
+      expect(rule.body, `选择器 "${rule.selector}" 违规包含 opacity 属性`).not.toContain('opacity:');
+    }
+
+    // 基础规则与 ProseMirror 规则特定属性守护
+    const baseRule = foundRules.find((r) => r.selector === '.tk-editor-box--disabled');
+    expect(baseRule, '必须包含 .tk-editor-box--disabled 基础规则').toBeTruthy();
+    expect(baseRule!.body).toContain('cursor: default');
+
+    const proseMirrorRule = foundRules.find((r) => r.selector.includes('.ProseMirror'));
+    expect(proseMirrorRule, '必须包含针对 .ProseMirror 的只读可交互声明').toBeTruthy();
+    expect(proseMirrorRule!.body).toContain('user-select: text');
+    expect(proseMirrorRule!.body).toContain('cursor: text');
 
     // 2. 运行时 DOM 挂载断言
     render(<RichEditor value="只读正文文本" disabled={true} />);
@@ -85,10 +97,10 @@ describe('RichEditor', () => {
     expect(screen.getByText('只读正文文本')).toBeTruthy();
   });
 
-  it('H1 验证：showFooter=true 时默认渲染底栏与字数统计，且初值使用纯文本字数', async () => {
+  it('H1 & N2 验证：showFooter=true 时默认渲染底栏与字数统计，多段落/标题纯文本字数不计多余换行符', async () => {
     render(
       <RichEditor
-        value="案情正文事实"
+        value={'### 标题\n\n正文内容'}
         showFooter={true}
         tipsText="请按 Ctrl+S 保存"
       />
@@ -96,7 +108,7 @@ describe('RichEditor', () => {
 
     expect(screen.getByTestId('tk-rich-editor-footer')).toBeTruthy();
     expect(screen.getByTestId('tk-rich-editor-char-count')).toBeTruthy();
-    // N2 验证：首屏必须按纯文本计算字数（"案情正文事实"共 6 字）
+    // N2 验证：首屏必须按纯文本计算字数（"### 标题\n\n正文内容" 纯文本为 "标题正文内容" 共 6 字，不虚占换行符）
     await waitFor(() => {
       expect(screen.getByText(/6 字/)).toBeTruthy();
     });
@@ -114,6 +126,25 @@ describe('RichEditor', () => {
 
     const box = screen.getByTestId('tk-rich-editor');
     expect(box.className).toContain('tk-editor-box--fixed');
+
+    const area = box.querySelector('.tk-editor-area') as HTMLElement;
+    expect(area).toBeTruthy();
+    expect(area.className).toContain('tk-editor-area--fixed');
+    expect(area.style.height).toBe('300px');
+    expect(area.style.minHeight).toBe('300px');
+    expect(area.style.overflowY).toBe('auto');
+  });
+
+  it('style 属性透传与 CSS Token 覆盖支持', () => {
+    render(
+      <RichEditor
+        value="自定义样式文本"
+        style={{ '--tk-radius-block': '16px', borderRadius: '16px' } as React.CSSProperties}
+      />
+    );
+
+    const box = screen.getByTestId('tk-rich-editor');
+    expect(box.style.borderRadius).toBe('16px');
   });
 
   it('N3 & N4 验证：隐藏 textarea 保持原文直通分发，并与 onChangeHtml 保持契约对称', () => {

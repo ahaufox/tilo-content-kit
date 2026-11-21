@@ -2,12 +2,14 @@
 
 > 自动生成，请勿手改。刷新：`pnpm api:update`。校验：`pnpm api:check`。
 
-<!-- 类型摘要 sha256:7a8a5bf90446f97a -->
+<!-- 类型摘要 sha256:340f84670cfdafcf -->
 
 ## 运行时导出符号
 
 - `CONTENT_KIT_VERSION`
 - `boldLegalSectionHeadings`
+- `checkSectionIntegrity`
+- `extractLegalSections`
 - `isLegalChapterHeading`
 - `isLegalSubSectionHeading`
 - `legalSectionHeadingHtml`
@@ -18,72 +20,65 @@
 
 ```ts
 export { C as CONTENT_KIT_VERSION } from './version.js';
+export { b as boldLegalSectionHeadings, i as isLegalChapterHeading, a as isLegalSubSectionHeading, l as legalSectionHeadingHtml, n as normalizeLegalMarkdown, s as stripLeadingDocumentTitle } from './normalize.js';
 
 /**
- * document-title.ts — 文书总标题去重与公文段落大写标题归一化工具（纯函数）
+ * legal/section-integrity — 法律公文小节条目提取与条目级完整度核验（纯函数，零依赖）
  *
- * 专案: 188-全栈正则治理源头结构化与防误伤收敛
- * 职责:
- *   1. stripLeadingDocumentTitle: Markdown 源码阶段对文书首行重复 H1 进行归一化严格全等匹配切除；
- *   2. isLegalChapterHeading: 公文大写数字章节标题行级谓词判定。
+ * 解决问题 (CNB Issue #585)：
+ *  - 替代粗粒度总字数比率断崖判断（解决总字数保留 77% 但诉求条目与事实首段蒸发时被短路放行的缺陷）
+ *  - 细粒度提取公文关键小节（当事人、诉讼请求条目、事实理由段落、落款），核验条目级完整度
  */
 /**
- * 在 Markdown 源码阶段切除首行与文书名严格全等的重复一级标题
- *
- * @param content 文书正文内容
- * @param documentTitle 文书元数据标题（例如「民事起诉状」）
- * @returns 去重后的正文内容（若首行不匹配则原样返回）
+ * 法律公文（起诉状/答辩状/仲裁申请书）结构化小节要素
  */
-declare function stripLeadingDocumentTitle(content: string, documentTitle?: string): string;
+interface LegalDocumentSections {
+    /** 文书主标题（如：民事起诉状、起诉状） */
+    title: string | null;
+    /** 当事人主体信息块（原告、被告、第三人等） */
+    partiesText: string;
+    /** 诉讼/仲裁请求条目清单（按序提取的条目内容） */
+    claims: string[];
+    /** 事实与理由正文段落列表（排除标题行后的实质展开段落） */
+    factsParagraphs: string[];
+    /** 送达裁判机构与致敬语（如：此致 XX人民法院） */
+    closing: string | null;
+    /** 落款主体与日期（具状人、起诉人、日期） */
+    signatures: string[];
+    /** 原始纯净文本总字数（排除所有 HTML/Markdown 控制标记与空白） */
+    substantiveTextLength: number;
+}
 /**
- * 判断给定行文本是否为合法的公文大写数字章节标题（例如「一、原告基本情况」）
- *
- * 门禁规则（四重防误伤）：
- *   1. 整行非空且首字符非 `#`；
- *   2. 整行长度严格控制在 4 ~ 30 个字符内（统一口径）；
- *   3. 格式为 `^([一二三四五六七八九十百]{1,3})、(.+)$`；
- *   4. 正文主体不以连续序数词（如「二月份」「二两项」）开头；
- *   5. 正文主体末尾不含断句标点（`、，,；;：:。`）。
- *
- * @param line 单行文本
- * @returns boolean
+ * 完整度对比与残缺判定原因枚举
  */
-declare function isLegalChapterHeading(line: string): boolean;
+type IntegrityFailureReason = 'TARGET_EMPTY' | 'CLAIMS_EVAPORATED' | 'CLAIMS_SUBSTANTIALLY_LOST' | 'FACTS_PREAMBLE_LOST' | 'SEVERE_LENGTH_CLIFF' | 'NONE';
 /**
- * 判断给定行文本是否为合法的公文三级小标题（例如「（一）借款事实证据」）
- *
- * 门禁规则（五重防误伤）：
- *   1. 整行非空且首字符非 `#`；
- *   2. 整行长度严格控制在 4 ~ 30 个字符内（小标题短小精炼，超过 30 字符多为事实陈述）；
- *   3. 格式为 `^[（(]([一二三四五六七八九十百]{1,3})[）)](.+)$`；
- *   4. 正文主体末尾排斥断句标点（`、，,；;：:。！？!?`）；
- *   5. 正文主体内部排斥断句句号与分号（`[。；;]`，若含有则为事实阐述句子而非小标题）。
- *
- * @param line 单行文本
- * @returns boolean
+ * 条目级完整度检查结果
  */
-declare function isLegalSubSectionHeading(line: string): boolean;
+interface SectionIntegrityCheckResult {
+    /** 是否存在实质性残缺截断 */
+    isTruncated: boolean;
+    /** 判定原因归因 */
+    reason: IntegrityFailureReason;
+    /** 受控基线诉讼请求条目数 */
+    baselineClaimsCount: number;
+    /** 目标待评估内容诉讼请求条目数 */
+    targetClaimsCount: number;
+    /** 受控基线事实理由段落数 */
+    baselineFactsCount: number;
+    /** 目标待评估内容事实理由段落数 */
+    targetFactsCount: number;
+    /** 详细审计描述 */
+    details: string;
+}
+/**
+ * 结构化提取公文关键要素小节
+ */
+declare function extractLegalSections(content: string): LegalDocumentSections;
+/**
+ * 条目级完整度核验核心函数 (Pure Function)
+ */
+declare function checkSectionIntegrity(baselineContent: string | undefined, targetContent: string | undefined): SectionIntegrityCheckResult;
 
-/**
- * 法定文书段落小标题加粗归一化（CNB #562 / #564）
- *
- * 「诉讼请求：」「事实与理由：」独立成行时必须加粗；
- * 已带 Markdown 标题或粗体标记的行保持原样，避免重复包裹。
- */
-/**
- * 将 Markdown 中独立成行的裸小标题规范化为粗体标记。
- */
-declare function boldLegalSectionHeadings(markdown: string): string;
-/**
- * 将单行裸小标题直接转换为 `<strong>` HTML。
- * 供不经过 Markdown 预处理的渲染路径（如共享文档预览）复用，无匹配时返回 null。
- */
-declare function legalSectionHeadingHtml(text: string): string | null;
-
-/**
- * 规范化法律文书中的 Markdown 标记（修复粗体空格、Setext 标题被误食换行、复合标题与公文大写数字层级）
- */
-declare const normalizeLegalMarkdown: (content: string) => string;
-
-export { boldLegalSectionHeadings, isLegalChapterHeading, isLegalSubSectionHeading, legalSectionHeadingHtml, normalizeLegalMarkdown, stripLeadingDocumentTitle };
+export { type IntegrityFailureReason, type LegalDocumentSections, type SectionIntegrityCheckResult, checkSectionIntegrity, extractLegalSections };
 ```

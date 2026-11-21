@@ -8,6 +8,7 @@
  */
 import { boldLegalSectionHeadings } from './legal-section-headings';
 import { isLegalChapterHeading, isLegalSubSectionHeading } from './document-title';
+import { normalizeAlignContainers } from './align-containers';
 
 /**
  * 规范化法律文书中的 Markdown 标记（修复粗体空格、Setext 标题被误食换行、复合标题与公文大写数字层级）
@@ -43,21 +44,15 @@ export const normalizeLegalMarkdown = (content: string): string => {
   }
 
   // 关键修复 (CNB Issue #585)：确保带对齐样式的块级容器（如 <div align="center">...</div>）：
-  // 1. 内部 Markdown 与标签之间具有独立空行，避免标题退化为裸文本；
-  // 2. 外部起始前与闭合后均具有双向空行隔离 (\n\n)，阻断 CommonMark HTML Block 对后续有序列表（1. 判令...）的吞噬；
+  // 1. 外部起始前与闭合后均具有双向空行隔离 (\n\n)，阻断 CommonMark HTML Block 对后续有序列表（1. 判令...）的吞噬；
+  // 2. 内部 Markdown 与标签之间具有独立空行，避免标题退化为裸文本；
   // 3. 严格限定于含对齐样式的排版容器，严禁对普通的 <td><p>...</p></td> 等表格内部产生破坏性断行。
-  text = text.replace(
-    /([^\n])?\s*(<(?:div|p)\b[^>]*(?:\balign\s*=|style\s*=\s*['"][^'"]*text-align)[^>]*>)\s*([^\n\s][\s\S]*?)\s*(<\/(?:div|p)>)\s*([^\n\s])?/gi,
-    (_match, before, openTag, inner, closeTag, after) => {
-      const prefix = before ? `${before}\n\n` : '';
-      const suffix = after ? `\n\n${after}` : '';
-      return `${prefix}${openTag}\n\n${inner}\n\n${closeTag}${suffix}`;
-    },
-  );
+  text = normalizeAlignContainers(text);
 
   // 解决同一行紧凑编写多个列表项场景（如 "1. 判令...； 2. 判令..."），将其拆分为独立行以确保编译为标准有序列表
+  // 分隔符后的空白只吃行内空格 [ \t]*，严禁吞掉已有换行，否则二次归一化会在列表项之间多插一个空行（破坏幂等性）
   text = text.replace(
-    /([；;。]\s*)((?:\d+[.、]|（\d+）|\(\d+\))\s*(?:判令|请求|确认|判决|支付|赔偿|归还|返还|承担))/g,
+    /([；;。])[ \t]*((?:\d+[.、]|（\d+）|\(\d+\))\s*(?:判令|请求|确认|判决|支付|赔偿|归还|返还|承担))/g,
     '$1\n$2',
   );
 

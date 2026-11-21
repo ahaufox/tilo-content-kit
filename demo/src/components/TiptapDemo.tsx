@@ -30,6 +30,7 @@ const INITIAL_MD = `### 周会待办与重要核对事项
 export function TiptapDemo() {
   const [content, setContent] = useState(INITIAL_MD);
   const [multiline, setMultiline] = useState(false);
+  const [showBubbleMenu, setShowBubbleMenu] = useState(true);
   const [boxWidth, setBoxWidth] = useState<'full' | 'narrow' | 'tablet'>('full');
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
@@ -106,6 +107,25 @@ export function TiptapDemo() {
             自动换行 (multiline)
           </button>
         </div>
+
+        {/* 表格气泡菜单参考开关 */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--tk-text-muted)' }}>表格气泡菜单:</span>
+          <button
+            className={`btn small ${showBubbleMenu ? 'primary' : 'ghost'}`}
+            onClick={() => setShowBubbleMenu(true)}
+            title="光标激活表格时自动弹出行/列快捷操作气泡"
+          >
+            开启 (默认)
+          </button>
+          <button
+            className={`btn small ${!showBubbleMenu ? 'primary' : 'ghost'}`}
+            onClick={() => setShowBubbleMenu(false)}
+            title="关闭表格浮动气泡菜单"
+          >
+            关闭
+          </button>
+        </div>
       </div>
 
       <div className="tiptap-box" style={{ padding: 0, ...widthStyle }}>
@@ -115,6 +135,7 @@ export function TiptapDemo() {
           placeholder="在此输入内容..."
           className="demo-rich-editor"
           multilineToolbar={multiline}
+          showTableBubbleMenu={showBubbleMenu}
           extraToolbarActions={
             <button
               type="button"

@@ -28,6 +28,11 @@ export {
 } from '../editor/EditorToolbar';
 
 export {
+  TableBubbleMenu,
+  type TableBubbleMenuProps,
+} from '../editor/TableBubbleMenu';
+
+export {
   ColorPicker,
   type ColorPickerProps,
 } from '../editor/ColorPicker';

@@ -2,7 +2,7 @@
 
 > 自动生成，请勿手改。刷新：`pnpm api:update`。校验：`pnpm api:check`。
 
-<!-- 类型摘要 sha256:c07ef87a6989bdcc -->
+<!-- 类型摘要 sha256:a41b3bf9cad5fe10 -->
 
 ## 运行时导出符号
 
@@ -16,6 +16,7 @@
 - `ResizableTableHeader`
 - `RichEditor`
 - `TABLE_COLUMN_CLICK_EVENT`
+- `TableBubbleMenu`
 - `USER_TABLE_RESIZE_ORIGIN`
 - `createDefaultEditorExtensions`
 - `resolveHandleTarget`
@@ -77,6 +78,7 @@ interface RichEditorProps {
     disabled?: boolean;
     autoFocus?: boolean;
     showToolbar?: boolean;
+    toolbarDataTestId?: string;
     extraToolbarActions?: React__default.ReactNode;
     onSaveShortcut?: () => void;
     onCancelShortcut?: () => void;
@@ -88,8 +90,22 @@ interface RichEditorProps {
     extensionOptions?: DefaultEditorExtensionsOptions;
     dataTestId?: string;
     multilineToolbar?: boolean;
+    /** 是否启用表格上下文浮动气泡菜单（光标位于表格单元格内时浮出快捷操作），默认 true，传 false 彻底关闭 */
+    showTableBubbleMenu?: boolean;
+    /** 高度排版模式：'full' 弹性撑满父容器 | 'auto' 随内容高度自适应 | 'fixed' 受 minHeight 约束，默认 'auto' */
+    heightMode?: 'full' | 'auto' | 'fixed';
+    /** 编辑区最小高度（数值默认转为 px，亦可传 '260px' 等字符串） */
+    minHeight?: number | string;
+    /** 文件拖拽悬浮态感知（为 true 时外边框呈现高亮环） */
+    isDragging?: boolean;
+    /** 是否渲染隐藏的 Native textarea 桥接（用于无障碍屏幕阅读器与传统表单提交） */
+    renderHiddenTextarea?: boolean;
+    /** 是否展示底部栏 */
+    showFooter?: boolean;
+    /** 自定义底部栏渲染函数 */
+    renderFooter?: (editor: Editor) => React__default.ReactNode;
 }
-declare function RichEditor({ value, onChange, onChangeHtml, placeholder, disabled, autoFocus, showToolbar, extraToolbarActions, onSaveShortcut, onCancelShortcut, className, editorClassName, textColors, highlightColors, extensions, extensionOptions, dataTestId, multilineToolbar, }: RichEditorProps): React__default.JSX.Element;
+declare function RichEditor({ value, onChange, onChangeHtml, placeholder, disabled, autoFocus, showToolbar, toolbarDataTestId, extraToolbarActions, onSaveShortcut, onCancelShortcut, className, editorClassName, textColors, highlightColors, extensions, extensionOptions, dataTestId, multilineToolbar, showTableBubbleMenu, heightMode, minHeight, isDragging, renderHiddenTextarea, showFooter, renderFooter, }: RichEditorProps): React__default.JSX.Element;
 
 /**
  * EditorToolbar — 标准纯净富文本格式化工具栏组件
@@ -124,6 +140,22 @@ interface EditorToolbarProps {
     multiline?: boolean;
 }
 declare function EditorToolbar({ editor, extraActions, disabled, className, dataTestId, textColors, highlightColors, btnActiveClass, multiline, }: EditorToolbarProps): React__default.JSX.Element | null;
+
+/**
+ * TableBubbleMenu — 表格上下文浮动气泡菜单
+ *
+ * 职责：当光标处于表格单元格内部时自动浮现，提供行/列新增与删除及整表删除操作。
+ * 设计边界：
+ *   1. 零外部 UI / 图标库依赖，纯原生内联 SVG 图标驱动；
+ *   2. 样式完全消费随包 `--tk-*` CSS 变量，支持浅色与暗黑模式；
+ *   3. 挂载于 Tiptap BubbleMenu，宿主可通过开关属性自主控制启用/关闭。
+ */
+
+interface TableBubbleMenuProps {
+    editor: Editor;
+    className?: string;
+}
+declare function TableBubbleMenu({ editor, className }: TableBubbleMenuProps): React__default.JSX.Element | null;
 
 /**
  * ColorPicker — 编辑器纯原生颜色选择器下拉组件
@@ -167,5 +199,5 @@ declare const ResizableTableCell: _tiptap_core.Node<_tiptap_extension_table.Tabl
 declare const ResizableTableHeader: _tiptap_core.Node<_tiptap_extension_table.TableHeaderOptions, any>;
 declare const ResizableTable: _tiptap_core.Node<_tiptap_extension_table.TableOptions, any>;
 
-export { type ColorOption, ColorPicker, type ColorPickerProps, DEFAULT_HIGHLIGHT_COLORS, DEFAULT_TEXT_COLORS, type DefaultEditorExtensionsOptions, EditorToolbar, type EditorToolbarProps, ResizableTable, ResizableTableCell, ResizableTableHeader, RichEditor, type RichEditorProps, TABLE_COLUMN_CLICK_EVENT, type TableColumnClickDetail, createDefaultEditorExtensions, resolveHandleTarget };
+export { type ColorOption, ColorPicker, type ColorPickerProps, DEFAULT_HIGHLIGHT_COLORS, DEFAULT_TEXT_COLORS, type DefaultEditorExtensionsOptions, EditorToolbar, type EditorToolbarProps, ResizableTable, ResizableTableCell, ResizableTableHeader, RichEditor, type RichEditorProps, TABLE_COLUMN_CLICK_EVENT, TableBubbleMenu, type TableBubbleMenuProps, type TableColumnClickDetail, createDefaultEditorExtensions, resolveHandleTarget };
 ```

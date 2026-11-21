@@ -355,6 +355,22 @@
   background: var(--tk-card);
   overflow: hidden;
   box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tk-editor-box--full {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.tk-editor-box--auto {
+  height: auto;
+}
+
+.tk-editor-box--dragging {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
 }
 
 .tk-editor-box--disabled {
@@ -366,6 +382,102 @@
   flex: 1 1 auto;
   min-height: 180px;
   overflow-y: auto;
+}
+
+.tk-editor-area--full {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.tk-editor-area--auto {
+  height: auto;
+}
+
+.tk-editor-hidden-textarea {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── 表格上下文浮动气泡菜单 (TableBubbleMenu) ────────────────────────────── */
+.tk-table-bubble-menu {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background-color: var(--tk-card, #ffffff);
+  border: 1px solid var(--tk-border, #e5e7eb);
+  border-radius: var(--tk-radius-block, 8px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  z-index: 50;
+  user-select: none;
+  font-size: 12px;
+  color: var(--tk-text-main, #1f2328);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.tk-table-bubble-menu__label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--tk-tertiary, #2563eb);
+  border-right: 1px solid var(--tk-border, #e5e7eb);
+  margin-right: 4px;
+}
+
+.tk-table-bubble-menu__btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+  border-radius: var(--tk-radius-chip, 4px);
+  border: none;
+  background: transparent;
+  color: var(--tk-text-body, #374151);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tk-table-bubble-menu__btn:hover {
+  background-color: var(--tk-surface-low, #f8fafc);
+  color: var(--tk-text-main, #1f2328);
+}
+
+.tk-table-bubble-menu__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.tk-table-bubble-menu__btn--danger {
+  color: #ef4444;
+}
+
+.tk-table-bubble-menu__btn--danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.tk-table-bubble-menu__divider {
+  width: 1px;
+  height: 14px;
+  background-color: var(--tk-border, #e5e7eb);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.tk-editor-content-host {
+  height: 100%;
 }
 
 .tk-editor-content {

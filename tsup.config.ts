@@ -18,6 +18,7 @@ export default defineConfig({
     'react-dom',
     '@tiptap/core',
     '@tiptap/react',
+    '@tiptap/react/menus',
     '@tiptap/starter-kit',
     '@tiptap/extension-color',
     '@tiptap/extension-highlight',

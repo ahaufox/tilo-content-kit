@@ -8,6 +8,7 @@ export { CONTENT_KIT_VERSION } from '../version';
 
 export { RichEditor, type RichEditorProps } from './RichEditor';
 export { EditorToolbar, type EditorToolbarProps } from './EditorToolbar';
+export { TableBubbleMenu, type TableBubbleMenuProps } from './TableBubbleMenu';
 export { ColorPicker, type ColorPickerProps } from './ColorPicker';
 export {
   DEFAULT_TEXT_COLORS,

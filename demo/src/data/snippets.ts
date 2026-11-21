@@ -78,13 +78,15 @@ const next = normalizeLegalMarkdown(source);`,
 
 const profile = profileFromDocumentTemplate(settings);
 const { style, applied, rejected } = applyProfile(profile);`,
-  editor: `import { RichEditor, EditorToolbar } from '@tilo-ui/content-kit/editor';
+  editor: `import { RichEditor, EditorToolbar, TableBubbleMenu } from '@tilo-ui/content-kit/editor';
 
-// 开箱即用的受控编辑器（自带 EditorToolbar、文字颜色标红与表格持久化）
+// 开箱即用的受控编辑器（自带 EditorToolbar、TableBubbleMenu、文字颜色标红与表格持久化）
 <RichEditor
   value={markdown}
   onChange={setMarkdown}
   placeholder="在此输入或编辑内容..."
+  showTableBubbleMenu={true} // 表格浮动上下文菜单开关（默认 true，传 false 关闭）
+  heightMode="auto"          // 高度模式：'auto' | 'full' | 'fixed'
 />`,
   collab: `import { computeMembers, tiloAwarenessAdapter } from '@tilo-ui/content-kit/collab';
 

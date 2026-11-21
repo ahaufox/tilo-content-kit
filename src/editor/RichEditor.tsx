@@ -11,9 +11,11 @@
  */
 import React, { useRef, useEffect, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import type { Editor } from '@tiptap/core';
 import { ensureHtml, htmlToMarkdown } from '../convert';
 import { createDefaultEditorExtensions, type DefaultEditorExtensionsOptions } from './defaultExtensions';
 import { EditorToolbar } from './EditorToolbar';
+import { TableBubbleMenu } from './TableBubbleMenu';
 import type { ColorOption } from './colors';
 
 export interface RichEditorProps {
@@ -24,6 +26,7 @@ export interface RichEditorProps {
   disabled?: boolean;
   autoFocus?: boolean;
   showToolbar?: boolean;
+  toolbarDataTestId?: string;
   extraToolbarActions?: React.ReactNode;
   onSaveShortcut?: () => void;
   onCancelShortcut?: () => void;
@@ -35,6 +38,20 @@ export interface RichEditorProps {
   extensionOptions?: DefaultEditorExtensionsOptions;
   dataTestId?: string;
   multilineToolbar?: boolean;
+  /** 是否启用表格上下文浮动气泡菜单（光标位于表格单元格内时浮出快捷操作），默认 true，传 false 彻底关闭 */
+  showTableBubbleMenu?: boolean;
+  /** 高度排版模式：'full' 弹性撑满父容器 | 'auto' 随内容高度自适应 | 'fixed' 受 minHeight 约束，默认 'auto' */
+  heightMode?: 'full' | 'auto' | 'fixed';
+  /** 编辑区最小高度（数值默认转为 px，亦可传 '260px' 等字符串） */
+  minHeight?: number | string;
+  /** 文件拖拽悬浮态感知（为 true 时外边框呈现高亮环） */
+  isDragging?: boolean;
+  /** 是否渲染隐藏的 Native textarea 桥接（用于无障碍屏幕阅读器与传统表单提交） */
+  renderHiddenTextarea?: boolean;
+  /** 是否展示底部栏 */
+  showFooter?: boolean;
+  /** 自定义底部栏渲染函数 */
+  renderFooter?: (editor: Editor) => React.ReactNode;
 }
 
 export function RichEditor({
@@ -45,6 +62,7 @@ export function RichEditor({
   disabled = false,
   autoFocus = false,
   showToolbar = true,
+  toolbarDataTestId,
   extraToolbarActions,
   onSaveShortcut,
   onCancelShortcut,
@@ -56,6 +74,13 @@ export function RichEditor({
   extensionOptions,
   dataTestId = 'tk-rich-editor',
   multilineToolbar = false,
+  showTableBubbleMenu = true,
+  heightMode = 'auto',
+  minHeight,
+  isDragging = false,
+  renderHiddenTextarea = false,
+  showFooter = false,
+  renderFooter,
 }: RichEditorProps) {
   const isUpdatingFromEditorRef = useRef(false);
   const onSaveShortcutRef = useRef(onSaveShortcut);
@@ -103,9 +128,9 @@ export function RichEditor({
         return false;
       },
     },
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor: currentEditor }) => {
       isUpdatingFromEditorRef.current = true;
-      const html = editor.getHTML();
+      const html = currentEditor.getHTML();
       const md = htmlToMarkdown(html);
       lastSyncedValueRef.current = md;
 
@@ -138,10 +163,57 @@ export function RichEditor({
     }
   }, [editor, value]);
 
+  // 在外层容器挂载 value 存取器描述符，方便测试框架与原生表单直接通过 container.value 交互
+  const containerRef = useRef<HTMLDivElement>(null);
+  const currentValRef = useRef(value || '');
+  useEffect(() => {
+    currentValRef.current = value || '';
+  }, [value]);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      Object.defineProperty(containerRef.current, 'value', {
+        get() {
+          return currentValRef.current;
+        },
+        set(val: string) {
+          currentValRef.current = val;
+          if (editor && !editor.isDestroyed) {
+            editor.commands.setContent(ensureHtml(val));
+          }
+          onChange?.(val);
+        },
+        configurable: true,
+      });
+    }
+  }, [editor, onChange]);
+
+  const minHeightStyle = typeof minHeight === 'number' ? `${minHeight}px` : minHeight;
+
+  const boxClasses = [
+    'tk-editor-box',
+    disabled ? 'tk-editor-box--disabled' : '',
+    heightMode === 'full' ? 'tk-editor-box--full' : '',
+    heightMode === 'auto' ? 'tk-editor-box--auto' : '',
+    isDragging ? 'tk-editor-box--dragging' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const areaClasses = [
+    'tk-editor-area',
+    heightMode === 'full' ? 'tk-editor-area--full' : '',
+    heightMode === 'auto' ? 'tk-editor-area--auto' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <div
+      ref={containerRef}
       data-testid={dataTestId}
-      className={`tk-editor-box ${disabled ? 'tk-editor-box--disabled' : ''} ${className}`}
+      className={boxClasses}
     >
       {showToolbar && editor && (
         <EditorToolbar
@@ -151,11 +223,42 @@ export function RichEditor({
           textColors={textColors}
           highlightColors={highlightColors}
           multiline={multilineToolbar}
+          dataTestId={toolbarDataTestId || 'editor-toolbar'}
         />
       )}
-      <div className="tk-editor-area">
-        <EditorContent editor={editor} />
+      <div
+        className={areaClasses}
+        style={{ minHeight: minHeightStyle }}
+      >
+        {showTableBubbleMenu && editor && (
+          <TableBubbleMenu editor={editor} />
+        )}
+        <EditorContent
+          editor={editor}
+          className="tk-editor-content-host"
+        />
       </div>
+      {showFooter && editor && renderFooter && (
+        <div className="tk-editor-footer">
+          {renderFooter(editor)}
+        </div>
+      )}
+      {renderHiddenTextarea && (
+        <textarea
+          tabIndex={-1}
+          aria-hidden="true"
+          placeholder={placeholder || '在此输入或编辑内容...'}
+          value={value || ''}
+          onChange={(e) => {
+            if (editor && !editor.isDestroyed) {
+              editor.commands.setContent(ensureHtml(e.target.value));
+            }
+            onChange?.(e.target.value);
+          }}
+          className="tk-editor-hidden-textarea"
+          data-testid={`${dataTestId}-native-textarea`}
+        />
+      )}
     </div>
   );
 }

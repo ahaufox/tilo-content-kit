@@ -10,6 +10,17 @@
 
 ## [0.6.4] - 2026-11-21
 
+### 新增与优化
+
+- **通用富文本编辑器能力下沉与表格上下文气泡菜单（`TableBubbleMenu` / `RichEditor`）**：
+  - 新增 `TableBubbleMenu` 表格浮动上下文菜单：内置原生 SVG 图标（上插行、下插行、删行、左插列、右插列、删列、删表），支持光标进入表格单元格时自适应浮出，消费随包 `--tk-*` 设计变量；
+  - `RichEditor` 支持参考开关 `showTableBubbleMenu?: boolean`（默认 `true`），调用方可自由配置开启或彻底关断气泡菜单；
+  - `RichEditor` 扩展高度排版模式（`heightMode: 'full' | 'auto' | 'fixed'` 与 `minHeight`），支持弹性撑满父容器与自适应高度切换；
+  - `RichEditor` 扩展 `isDragging` 拖拽高亮态感知与 `renderHiddenTextarea` 无障碍表单桥接；
+  - 外层容器挂载 DOM `value` 存取器描述符，保障单测 `fireEvent.change` 与原生表单直接驱动；
+  - 导出对齐：`/editor` 与 `/tiptap` 双入口同步导出 `TableBubbleMenu` 及相关契约类型；
+  - Demo 页面同步更新：新增表格气泡菜单开关（开启/关闭）交互演示与代码示例。
+
 ### 修复
 
 - **公文归一化幂等性与表格结构保护（`normalizeLegalMarkdown`）**：

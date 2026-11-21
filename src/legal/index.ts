@@ -9,3 +9,4 @@ export { CONTENT_KIT_VERSION } from '../version';
 export * from './document-title';
 export * from './legal-section-headings';
 export * from './normalize';
+export * from './section-integrity';

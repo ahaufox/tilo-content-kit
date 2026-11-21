@@ -49,6 +49,17 @@ export const normalizeLegalMarkdown = (content: string): string => {
     '$1\n\n$2\n\n$3',
   );
 
+  // 关键修复 (CNB Issue #585)：确保带对齐样式的块级容器外部（起始前与闭合后）均具有双向空行隔离 (\n\n)，
+  // 彻底阻断 CommonMark HTML Block 对紧随其后的 Markdown 有序列表（1. 判令...）和段落的吞噬
+  text = text.replace(
+    /([^\n])\s*(<(?:div|p)\b[^>]*(?:\balign\s*=|style\s*=\s*['"][^'"]*text-align)[^>]*>)/gi,
+    '$1\n\n$2',
+  );
+  text = text.replace(
+    /(<\/(?:div|p)>)\s*([^\n\s])/gi,
+    '$1\n\n$2',
+  );
+
   // 1. 段落小标题加粗：独立成行的「诉讼请求：」「事实与理由：」统一输出粗体标记
   text = boldLegalSectionHeadings(text);
 

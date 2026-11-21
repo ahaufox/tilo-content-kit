@@ -32,8 +32,8 @@ const downcastAlignToInlineStyle = (html: string): string => {
     (_m: string, _tag: string, _before: string, align: string, _after: string, inner: string) => {
       const style = `text-align: ${align}`;
       // 内部已含块级标签：给每个块级子元素注入 style="text-align: ..."
-      if (/<(p|h[1-6])\b/i.test(inner)) {
-        return inner.replace(/<(p|h[1-6])\b([^>]*)>/gi, (m: string, t: string, attrs: string) => {
+      if (/<(p|h[1-6]|ol|ul|li|blockquote|table)\b/i.test(inner)) {
+        return inner.replace(/<(p|h[1-6]|li)\b([^>]*)>/gi, (m: string, t: string, attrs: string) => {
           if (/style\s*=\s*["'][^"']*text-align/i.test(attrs)) {
             return m;
           }

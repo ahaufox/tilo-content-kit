@@ -343,6 +343,8 @@
 
 /* ── 富文本编辑器与格式工具栏（Editor & Toolbar）─────────────────────────── */
 .tk-editor-box {
+  --tk-page-padding-x: 1rem;
+  --tk-page-padding-y: 1rem;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -518,7 +520,7 @@
 
 .tk-editor-content {
   min-height: 160px;
-  padding: 16px;
+  padding: var(--tk-page-padding-y, 1rem) var(--tk-page-padding-x, 1rem);
   outline: none;
   cursor: text;
 }

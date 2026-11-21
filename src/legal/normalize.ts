@@ -42,22 +42,23 @@ export const normalizeLegalMarkdown = (content: string): string => {
     }
   }
 
-  // 确保 <div align="..."> 或带对齐样式的块级容器内部 Markdown 语法与标签之间有独立空行，
-  // 避免 CommonMark 将单换行包裹的 # 标题识别为原始纯文本
+  // 关键修复 (CNB Issue #585)：确保带对齐样式的块级容器（如 <div align="center">...</div>）：
+  // 1. 内部 Markdown 与标签之间具有独立空行，避免标题退化为裸文本；
+  // 2. 外部起始前与闭合后均具有双向空行隔离 (\n\n)，阻断 CommonMark HTML Block 对后续有序列表（1. 判令...）的吞噬；
+  // 3. 严格限定于含对齐样式的排版容器，严禁对普通的 <td><p>...</p></td> 等表格内部产生破坏性断行。
   text = text.replace(
-    /(<(?:div|p)\b[^>]*(?:\balign\s*=|style\s*=\s*['"][^'"]*text-align)[^>]*>)\s*([^\n\s][\s\S]*?)\s*(<\/(?:div|p)>)/gi,
-    '$1\n\n$2\n\n$3',
+    /([^\n])?\s*(<(?:div|p)\b[^>]*(?:\balign\s*=|style\s*=\s*['"][^'"]*text-align)[^>]*>)\s*([^\n\s][\s\S]*?)\s*(<\/(?:div|p)>)\s*([^\n\s])?/gi,
+    (_match, before, openTag, inner, closeTag, after) => {
+      const prefix = before ? `${before}\n\n` : '';
+      const suffix = after ? `\n\n${after}` : '';
+      return `${prefix}${openTag}\n\n${inner}\n\n${closeTag}${suffix}`;
+    },
   );
 
-  // 关键修复 (CNB Issue #585)：确保带对齐样式的块级容器外部（起始前与闭合后）均具有双向空行隔离 (\n\n)，
-  // 彻底阻断 CommonMark HTML Block 对紧随其后的 Markdown 有序列表（1. 判令...）和段落的吞噬
+  // 解决同一行紧凑编写多个列表项场景（如 "1. 判令...； 2. 判令..."），将其拆分为独立行以确保编译为标准有序列表
   text = text.replace(
-    /([^\n])\s*(<(?:div|p)\b[^>]*(?:\balign\s*=|style\s*=\s*['"][^'"]*text-align)[^>]*>)/gi,
-    '$1\n\n$2',
-  );
-  text = text.replace(
-    /(<\/(?:div|p)>)\s*([^\n\s])/gi,
-    '$1\n\n$2',
+    /([；;。]\s*)((?:\d+[.、]|（\d+）|\(\d+\))\s*(?:判令|请求|确认|判决|支付|赔偿|归还|返还|承担))/g,
+    '$1\n$2',
   );
 
   // 1. 段落小标题加粗：独立成行的「诉讼请求：」「事实与理由：」统一输出粗体标记

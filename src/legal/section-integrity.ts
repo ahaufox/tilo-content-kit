@@ -66,7 +66,8 @@ function cleanText(raw: string): string {
   if (!raw) return '';
   return raw
     .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n')
+    // 将所有闭合块级标签（HTML 与 Yjs/ProseMirror XML 节点如 </p>, </div>, </paragraph>, </heading>, </listItem> 等）转换为换行
+    .replace(/<\/(?:p|div|h[1-6]|li|blockquote|tableRow|tableCell|paragraph|heading|listItem|[a-zA-Z0-9_-]+)>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/\r\n/g, '\n');
 }
@@ -173,19 +174,7 @@ export function checkSectionIntegrity(
   baselineContent: string | undefined,
   targetContent: string | undefined,
 ): SectionIntegrityCheckResult {
-  // 1. 基线非空但目标为空检查
-  if (!targetContent || isHtmlSubstantivelyEmpty(targetContent)) {
-    return {
-      isTruncated: true,
-      reason: 'TARGET_EMPTY',
-      baselineClaimsCount: 0,
-      targetClaimsCount: 0,
-      baselineFactsCount: 0,
-      targetFactsCount: 0,
-      details: '待评估目标内容为空或实质为空标签',
-    };
-  }
-
+  // 0. 若基线本身实质为空，不存在截断参照物，直接返回 NONE（豁免核验）
   if (!baselineContent || isHtmlSubstantivelyEmpty(baselineContent)) {
     return {
       isTruncated: false,
@@ -195,6 +184,19 @@ export function checkSectionIntegrity(
       baselineFactsCount: 0,
       targetFactsCount: 0,
       details: '基线内容为空，无需残缺核验',
+    };
+  }
+
+  // 1. 基线非空但目标待评估内容实质为空检查
+  if (!targetContent || isHtmlSubstantivelyEmpty(targetContent)) {
+    return {
+      isTruncated: true,
+      reason: 'TARGET_EMPTY',
+      baselineClaimsCount: 0,
+      targetClaimsCount: 0,
+      baselineFactsCount: 0,
+      targetFactsCount: 0,
+      details: '待评估目标内容为空或实质为空标签',
     };
   }
 

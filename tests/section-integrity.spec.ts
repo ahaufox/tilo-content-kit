@@ -103,5 +103,45 @@ describe('legal/section-integrity — 公文小节与条目完整度核验 (Issu
       expect(result.isTruncated).toBe(false);
       expect(result.reason).toBe('NONE');
     });
+
+    it('基线为空时，无论目标为空还是非空，均返回 NONE 且 isTruncated=false (建议项 7)', () => {
+      const resultEmpty = checkSectionIntegrity('', '');
+      expect(resultEmpty.isTruncated).toBe(false);
+      expect(resultEmpty.reason).toBe('NONE');
+
+      const resultWithTarget = checkSectionIntegrity('', fullPetition);
+      expect(resultWithTarget.isTruncated).toBe(false);
+      expect(resultWithTarget.reason).toBe('NONE');
+    });
+
+    it('真实 Yjs 无换行 XML 片段（带 </paragraph> 等 ProseMirror 标签）应精准识别诉求条目，绝不误判为残缺 (阻断项 1)', () => {
+      // 真实 Yjs toString() 输出为连续无换行 XML 标签 (无 \n)
+      const realYjsFragmentString = [
+        '<paragraph># 起诉状</paragraph>',
+        '<paragraph>原告：周凯，男，汉族，1990年1月1日出生，住址：北京市朝阳区。</paragraph>',
+        '<paragraph>被告：李某，男，汉族，1988年2月2日出生，住址：北京市海淀区。</paragraph>',
+        '<paragraph>诉讼请求：</paragraph>',
+        '<paragraph>1. 判令被告向原告偿还借款本金人民币13000.00元；</paragraph>',
+        '<paragraph>2. 判令被告承担本案全部诉讼费用。</paragraph>',
+        '<paragraph>事实与理由：</paragraph>',
+        '<paragraph>被告因资金周转需要于2025年1月向原告借款，原告于2025年1月25日通过微信向被告转账3000元，又于2025年3月26日通过微信向被告转账10000元，合计向被告交付借款本金13000元。</paragraph>',
+        '<paragraph>卷内暂无借条，以上借款未约定利息，未约定还款期限。</paragraph>',
+        '<paragraph>后经原告多次催要，被告至今未予偿还。为此，原告为维护自身合法权益，特向贵院提起诉讼，望判如所请。</paragraph>',
+        '<paragraph>此致</paragraph>',
+        '<paragraph>北京市海淀区人民法院</paragraph>',
+        '<paragraph>具状人：周凯</paragraph>',
+        '<paragraph>2025年5月1日</paragraph>',
+      ].join('');
+
+      const sections = extractLegalSections(realYjsFragmentString);
+      expect(sections.claims.length).toBeGreaterThanOrEqual(2);
+      expect(sections.claims[0]).toContain('13000');
+      expect(sections.claims[1]).toContain('诉讼费用');
+
+      const result = checkSectionIntegrity(fullPetition, realYjsFragmentString);
+      expect(result.isTruncated).toBe(false);
+      expect(result.reason).toBe('NONE');
+      expect(result.targetClaimsCount).toBeGreaterThanOrEqual(2);
+    });
   });
 });

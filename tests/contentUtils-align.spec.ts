@@ -71,4 +71,20 @@ describe('contentUtils — 公文对齐容器保护与下沉', () => {
     const roundTripHtml = ensureHtml(md);
     expect(roundTripHtml).toContain('text-align: right');
   });
+
+  it('normalizeLegalMarkdown 不应破坏表格内的 td/p 结构 (警告项 4)', () => {
+    const rawTable = '<table><tr><td><p>单元格段落1</p></td></tr></table>';
+    const normalized = normalizeLegalMarkdown(rawTable);
+    expect(normalized).not.toContain('</p>\n\n</td>');
+    expect(normalized).toContain('<td><p>单元格段落1</p></td>');
+  });
+
+  it('normalizeLegalMarkdown 应将同一行的紧凑列表项拆分，ensureHtml 编译出 2 个 li 列表项 (警告项 5)', () => {
+    const compactList = '<div align="center">**诉讼请求**</div>\n1. 判令偿还本金13000元； 2. 判令承担诉讼费用。';
+    const html = ensureHtml(compactList);
+    const liMatches = html.match(/<li\b[^>]*>/g) || [];
+    expect(liMatches.length).toBe(2);
+    expect(html).toContain('判令偿还本金13000元');
+    expect(html).toContain('判令承担诉讼费用');
+  });
 });

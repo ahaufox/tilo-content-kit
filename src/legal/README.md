@@ -16,7 +16,6 @@
 | `align-containers.ts` | HTML 块级排版容器（居中/右对齐）空行隔离，防止吞噬后续有序列表（内部件） |
 | `document-title.ts` | 文书首行重复标题切除；大写数字章节 / 三级小标题行级谓词 |
 | `legal-section-headings.ts` | 「诉讼请求：」「事实与理由：」独立成行时的加粗归一化 |
-| `align-containers.ts` | 对齐容器（`<div align>` / `<p align>`）的双向空行隔离与嵌套、表格保护 |
 | `normalize.ts` | 公文 Markdown 归一化主流程（编排上述能力） |
 | `section-integrity.ts` | 公文小节结构化提取与条目级残缺核验 |
 

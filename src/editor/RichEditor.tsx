@@ -9,7 +9,7 @@
  *   5. immediatelyRender: false 规避 SSR 服务端水合不一致；
  *   6. 零 Tailwind 强绑定，样式完全消费随包 `--tk-*` CSS 变量。
  */
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
 import { ensureHtml, htmlToMarkdown } from '../convert';
@@ -46,10 +46,12 @@ export interface RichEditorProps {
   minHeight?: number | string;
   /** 文件拖拽悬浮态感知（为 true 时外边框呈现高亮环） */
   isDragging?: boolean;
-  /** 是否渲染隐藏的 Native textarea 桥接（用于无障碍屏幕阅读器与传统表单提交） */
+  /** 是否渲染隐藏的 Native textarea 桥接（用于原生表单集成与自动化测试桥接，带 aria-hidden="true" 与 tabIndex={-1}） */
   renderHiddenTextarea?: boolean;
   /** 是否展示底部栏 */
   showFooter?: boolean;
+  /** 底部栏提示文本 */
+  tipsText?: string;
   /** 自定义底部栏渲染函数 */
   renderFooter?: (editor: Editor) => React.ReactNode;
 }
@@ -80,12 +82,29 @@ export function RichEditor({
   isDragging = false,
   renderHiddenTextarea = false,
   showFooter = false,
+  tipsText,
   renderFooter,
 }: RichEditorProps) {
   const isUpdatingFromEditorRef = useRef(false);
   const onSaveShortcutRef = useRef(onSaveShortcut);
   const onCancelShortcutRef = useRef(onCancelShortcut);
+  const showFooterRef = useRef(showFooter);
   const lastSyncedValueRef = useRef(value);
+  const isFirstSyncRef = useRef(true);
+  const isInitializedRef = useRef(false);
+  const [charCount, setCharCount] = useState<number>(0);
+
+  useEffect(() => {
+    showFooterRef.current = showFooter;
+  }, [showFooter]);
+
+  useEffect(() => {
+    // 挂载初次完成，在下个宏任务周期激活用户输入监听，杜绝挂载期 setEditable 触发偷发初值
+    const timer = setTimeout(() => {
+      isInitializedRef.current = true;
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     onSaveShortcutRef.current = onSaveShortcut;
@@ -106,12 +125,18 @@ export function RichEditor({
     autofocus: autoFocus,
     extensions: editorExtensions,
     content: ensureHtml(value || ''),
+    onCreate: ({ editor: initialEditor }) => {
+      if (showFooterRef.current) {
+        setCharCount(initialEditor.getText().length);
+      }
+    },
     editorProps: {
       attributes: {
         'data-testid': `${dataTestId}-content`,
         class: `tk-content tk-editor-content ${editorClassName}`,
       },
       handleKeyDown: (_view, event) => {
+        isInitializedRef.current = true;
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
           event.preventDefault();
           if (onSaveShortcutRef.current) {
@@ -129,10 +154,17 @@ export function RichEditor({
       },
     },
     onUpdate: ({ editor: currentEditor }) => {
+      // 挂载初次完成前且未聚焦时，忽略内部初始化事务（如 setEditable 等触发），防多发初值
+      if (!isInitializedRef.current && !currentEditor.isFocused) return;
+      isInitializedRef.current = true;
+
       isUpdatingFromEditorRef.current = true;
       const html = currentEditor.getHTML();
       const md = htmlToMarkdown(html);
       lastSyncedValueRef.current = md;
+      if (showFooterRef.current) {
+        setCharCount(currentEditor.getText().length);
+      }
 
       onChange?.(md);
       onChangeHtml?.(html);
@@ -150,43 +182,61 @@ export function RichEditor({
     }
   }, [editor, disabled]);
 
-  // 当外部受控 value 发生实质变化时同步更新编辑器内容
+  // 当外部受控 value 发生实质变化时同步更新编辑器内容（首轮挂载静默拉齐，防多发初值）
   useEffect(() => {
     if (!editor || editor.isDestroyed) return;
+    if (isFirstSyncRef.current) {
+      isFirstSyncRef.current = false;
+      lastSyncedValueRef.current = value || '';
+      return;
+    }
     if (isUpdatingFromEditorRef.current) return;
 
     const currentHtml = editor.getHTML();
     const currentMd = htmlToMarkdown(currentHtml);
     if (currentMd.trim() !== (value || '').trim()) {
-      lastSyncedValueRef.current = value;
+      lastSyncedValueRef.current = value || '';
       editor.commands.setContent(ensureHtml(value || ''));
+      if (showFooterRef.current) {
+        setCharCount(editor.getText().length);
+      }
     }
   }, [editor, value]);
 
   // 在外层容器挂载 value 存取器描述符，方便测试框架与原生表单直接通过 container.value 交互
   const containerRef = useRef<HTMLDivElement>(null);
-  const currentValRef = useRef(value || '');
-  useEffect(() => {
-    currentValRef.current = value || '';
-  }, [value]);
 
   useEffect(() => {
     if (containerRef.current) {
       Object.defineProperty(containerRef.current, 'value', {
         get() {
-          return currentValRef.current;
+          if (editor && !editor.isDestroyed) {
+            return htmlToMarkdown(editor.getHTML());
+          }
+          return lastSyncedValueRef.current;
         },
         set(val: string) {
-          currentValRef.current = val;
+          isInitializedRef.current = true;
+          const stringVal = String(val ?? '');
           if (editor && !editor.isDestroyed) {
-            editor.commands.setContent(ensureHtml(val));
+            // 显式传 { emitUpdate: false } 关断 Tiptap 内部 update 事件，由下方统一单次分发清洗后的标准 Markdown
+            editor.commands.setContent(ensureHtml(stringVal), { emitUpdate: false });
+            const cleanMd = htmlToMarkdown(editor.getHTML());
+            lastSyncedValueRef.current = cleanMd;
+            if (showFooterRef.current) {
+              setCharCount(editor.getText().length);
+            }
+            onChange?.(cleanMd);
+            onChangeHtml?.(editor.getHTML());
+          } else {
+            lastSyncedValueRef.current = stringVal;
+            onChange?.(stringVal);
           }
-          onChange?.(val);
         },
         configurable: true,
       });
     }
-  }, [editor, onChange]);
+  }, [editor, onChange, onChangeHtml]);
 
   const minHeightStyle = typeof minHeight === 'number' ? `${minHeight}px` : minHeight;
 
@@ -195,6 +245,7 @@ export function RichEditor({
     disabled ? 'tk-editor-box--disabled' : '',
     heightMode === 'full' ? 'tk-editor-box--full' : '',
     heightMode === 'auto' ? 'tk-editor-box--auto' : '',
+    heightMode === 'fixed' ? 'tk-editor-box--fixed' : '',
     isDragging ? 'tk-editor-box--dragging' : '',
     className,
   ]
@@ -205,9 +256,15 @@ export function RichEditor({
     'tk-editor-area',
     heightMode === 'full' ? 'tk-editor-area--full' : '',
     heightMode === 'auto' ? 'tk-editor-area--auto' : '',
+    heightMode === 'fixed' ? 'tk-editor-area--fixed' : '',
   ]
     .filter(Boolean)
     .join(' ');
+
+  const areaStyle: React.CSSProperties = {
+    minHeight: minHeightStyle,
+    ...(heightMode === 'fixed' && minHeightStyle ? { height: minHeightStyle, overflowY: 'auto' } : {}),
+  };
 
   return (
     <div
@@ -228,7 +285,15 @@ export function RichEditor({
       )}
       <div
         className={areaClasses}
-        style={{ minHeight: minHeightStyle }}
+        style={areaStyle}
+        onClick={(e) => {
+          if (!disabled && editor && !editor.isDestroyed) {
+            // 点击发生在空白区时聚焦编辑器
+            if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('tk-editor-area')) {
+              editor.commands.focus();
+            }
+          }
+        }}
       >
         {showTableBubbleMenu && editor && (
           <TableBubbleMenu editor={editor} />
@@ -238,9 +303,29 @@ export function RichEditor({
           className="tk-editor-content-host"
         />
       </div>
-      {showFooter && editor && renderFooter && (
-        <div className="tk-editor-footer">
-          {renderFooter(editor)}
+      {showFooter && editor && (
+        <div
+          className="tk-editor-footer"
+          data-testid={`${dataTestId}-footer`}
+        >
+          {renderFooter ? (
+            renderFooter(editor)
+          ) : (
+            <>
+              <div
+                className="tk-editor-footer-tips"
+                data-testid={`${dataTestId}-footer-tips`}
+              >
+                {tipsText || ''}
+              </div>
+              <div
+                className="tk-editor-footer-count"
+                data-testid={`${dataTestId}-char-count`}
+              >
+                {charCount} 字
+              </div>
+            </>
+          )}
         </div>
       )}
       {renderHiddenTextarea && (
@@ -250,10 +335,20 @@ export function RichEditor({
           placeholder={placeholder || '在此输入或编辑内容...'}
           value={value || ''}
           onChange={(e) => {
+            isInitializedRef.current = true;
+            const nextVal = e.target.value;
             if (editor && !editor.isDestroyed) {
-              editor.commands.setContent(ensureHtml(e.target.value));
+              editor.commands.setContent(ensureHtml(nextVal), { emitUpdate: false });
+              lastSyncedValueRef.current = nextVal;
+              if (showFooterRef.current) {
+                setCharCount(editor.getText().length);
+              }
+              onChange?.(nextVal);
+              onChangeHtml?.(editor.getHTML());
+            } else {
+              lastSyncedValueRef.current = nextVal;
+              onChange?.(nextVal);
             }
-            onChange?.(e.target.value);
           }}
           className="tk-editor-hidden-textarea"
           data-testid={`${dataTestId}-native-textarea`}

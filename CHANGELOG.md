@@ -23,6 +23,13 @@
 
 ### 修复
 
+- **富文本基座只读态、底栏统计、高度模式、样式特异性、DOM 赋值与交互加固（`RichEditor` / `styles`）**：
+  - **只读态交互修复 (B1)**：移除 `.tk-editor-box--disabled` 的 `opacity: 0.65; pointer-events: none;`，改为 `cursor: default` 并对内部编辑区保留 `cursor: text; user-select: text;`，使只读态/预览渲染器文本仍可正常高亮选中、复制与滚动；
+  - **底栏与字数统计口径与门控 (H1 / N2)**：`RichEditorProps` 补齐 `tipsText?: string;`，在 `showFooter=true` 且未提供自定义 `renderFooter` 时，默认渲染左侧 `tipsText` 与右侧 `{charCount} 字`（带 `data-testid` 守卫）；首屏字数统一基于纯文本计算，且在 `showFooter=false` 时完全关闭字数统计避免无谓重渲染；
+  - **固定高度模型落地 (H2)**：落地 `heightMode="fixed"` 对应的 `.tk-editor-box--fixed` 与 `.tk-editor-area--fixed`，内联注入 `height: minHeightStyle; overflowY: 'auto'`，杜绝退化为默认样式；
+  - **CSS 特异性全面降级 (W6)**：将 `.tk-content` / `.tk-editor-content` 的默认排版标签规则（含标题、段落、列表、表格、代码块及链接）全面收敛至 `:where(.tk-content, .tk-editor-content)`，将选择器特异性降至 `(0, 0, 1)`，使宿主 Tailwind prose 样式（如 `prose-h1:text-xl` 即 `(0, 1, 0)`）能够精准覆盖，解决样式优先级倒置；
+  - **DOM value 存取器单次分发、实时 getter 与桥接直通 (W1 / N3 / N4)**：拦截初次挂载时内部无操作的 `onUpdate` 触发（首发静默）；`setter` 显式关断内部 update，由统一出口单次下发清洗后的 Markdown；隐藏 textarea 保持原生 Markdown 直通分发（杜绝 Turndown 破坏性断行）；`setter` 与隐藏 textarea 统一同步触发 `onChangeHtml`；`getter` 实时动态计算 Markdown；
+  - **空白区聚焦与占位符匹配 (S1 / S4)**：在 `.tk-editor-area` 空白区点击时自动触发编辑器聚焦；修正占位符选择器匹配规则为 `:where(.tk-editor-content).ProseMirror p.is-editor-empty:first-child::before`。
 - **公文归一化幂等性与表格结构保护（`normalizeLegalMarkdown`）**：
   - 紧凑列表拆分正则由 `([；;。]\s*)` 收敛为 `([；;。])[ \t]*`：分隔符后只吃行内空格，不再吞掉已有换行，对已归一化文本重复执行不再在列表项之间多插一个空行（A→B→C 恒等）；
   - 对齐容器归一化抽离为独立模块 `legal/align-containers.ts`：按同标签嵌套计数定位闭合标签，最外层优先、内层递归处理，嵌套 `<div><p>…</p></div>` 的 `</div>` 后补齐独立空行；

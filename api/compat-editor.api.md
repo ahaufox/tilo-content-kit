@@ -2,7 +2,7 @@
 
 > 自动生成，请勿手改。刷新：`pnpm api:update`。校验：`pnpm api:check`。
 
-<!-- 类型摘要 sha256:a41b3bf9cad5fe10 -->
+<!-- 类型摘要 sha256:648b2f193365afd6 -->
 
 ## 运行时导出符号
 
@@ -98,14 +98,16 @@ interface RichEditorProps {
     minHeight?: number | string;
     /** 文件拖拽悬浮态感知（为 true 时外边框呈现高亮环） */
     isDragging?: boolean;
-    /** 是否渲染隐藏的 Native textarea 桥接（用于无障碍屏幕阅读器与传统表单提交） */
+    /** 是否渲染隐藏的 Native textarea 桥接（用于原生表单集成与自动化测试桥接，带 aria-hidden="true" 与 tabIndex={-1}） */
     renderHiddenTextarea?: boolean;
     /** 是否展示底部栏 */
     showFooter?: boolean;
+    /** 底部栏提示文本 */
+    tipsText?: string;
     /** 自定义底部栏渲染函数 */
     renderFooter?: (editor: Editor) => React__default.ReactNode;
 }
-declare function RichEditor({ value, onChange, onChangeHtml, placeholder, disabled, autoFocus, showToolbar, toolbarDataTestId, extraToolbarActions, onSaveShortcut, onCancelShortcut, className, editorClassName, textColors, highlightColors, extensions, extensionOptions, dataTestId, multilineToolbar, showTableBubbleMenu, heightMode, minHeight, isDragging, renderHiddenTextarea, showFooter, renderFooter, }: RichEditorProps): React__default.JSX.Element;
+declare function RichEditor({ value, onChange, onChangeHtml, placeholder, disabled, autoFocus, showToolbar, toolbarDataTestId, extraToolbarActions, onSaveShortcut, onCancelShortcut, className, editorClassName, textColors, highlightColors, extensions, extensionOptions, dataTestId, multilineToolbar, showTableBubbleMenu, heightMode, minHeight, isDragging, renderHiddenTextarea, showFooter, tipsText, renderFooter, }: RichEditorProps): React__default.JSX.Element;
 
 /**
  * EditorToolbar — 标准纯净富文本格式化工具栏组件

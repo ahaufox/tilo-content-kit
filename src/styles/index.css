@@ -63,7 +63,7 @@
   box-sizing: border-box;
 }
 
-.tk-content {
+:where(.tk-content, .tk-editor-content) {
   padding: var(--tk-page-padding-y) var(--tk-page-padding-x);
   font-family: var(--tk-font-family-body);
   font-size: var(--tk-font-size-body);
@@ -74,16 +74,16 @@
   print-color-adjust: exact;
 }
 
-.tk-content p {
+:where(.tk-content, .tk-editor-content) p {
   margin: 0.75em 0;
 }
 
-.tk-content h1,
-.tk-content h2,
-.tk-content h3,
-.tk-content h4,
-.tk-content h5,
-.tk-content h6 {
+:where(.tk-content, .tk-editor-content) h1,
+:where(.tk-content, .tk-editor-content) h2,
+:where(.tk-content, .tk-editor-content) h3,
+:where(.tk-content, .tk-editor-content) h4,
+:where(.tk-content, .tk-editor-content) h5,
+:where(.tk-content, .tk-editor-content) h6 {
   margin: 1.4em 0 0.6em;
   color: var(--tk-text-main);
   font-weight: 600;
@@ -91,34 +91,34 @@
   line-height: var(--tk-line-height-heading);
 }
 
-.tk-content h1 {
+:where(.tk-content, .tk-editor-content) h1 {
   font-size: var(--tk-font-size-h1);
 }
 
-.tk-content h2 {
+:where(.tk-content, .tk-editor-content) h2 {
   font-size: var(--tk-font-size-h2);
 }
 
-.tk-content h3 {
+:where(.tk-content, .tk-editor-content) h3 {
   font-size: var(--tk-font-size-h3);
 }
 
-.tk-content h4,
-.tk-content h5,
-.tk-content h6 {
+:where(.tk-content, .tk-editor-content) h4,
+:where(.tk-content, .tk-editor-content) h5,
+:where(.tk-content, .tk-editor-content) h6 {
   font-size: var(--tk-font-size-h4);
 }
 
-.tk-content > :first-child {
+:where(.tk-content, .tk-editor-content) > :first-child {
   margin-top: 0;
 }
 
-.tk-content > :last-child {
+:where(.tk-content, .tk-editor-content) > :last-child {
   margin-bottom: 0;
 }
 
-.tk-content strong,
-.tk-content b,
+:where(.tk-content, .tk-editor-content) strong,
+:where(.tk-content, .tk-editor-content) b,
 .tk-editor strong,
 .tk-editor b,
 .tk-editor-content .ProseMirror strong,
@@ -128,61 +128,61 @@
   -webkit-text-stroke: 0.2px currentColor;
 }
 
-.tk-content em {
+:where(.tk-content, .tk-editor-content) em {
   font-style: italic;
 }
 
-.tk-content del {
+:where(.tk-content, .tk-editor-content) del {
   opacity: 0.75;
 }
 
-.tk-content sup,
-.tk-content sub {
+:where(.tk-content, .tk-editor-content) sup,
+:where(.tk-content, .tk-editor-content) sub {
   font-size: 0.75em;
   line-height: 0;
 }
 
-.tk-content ul,
-.tk-content ol {
+:where(.tk-content, .tk-editor-content) ul,
+:where(.tk-content, .tk-editor-content) ol {
   margin: 0.75em 0;
   padding-left: 1.4em;
 }
 
-.tk-content ul {
+:where(.tk-content, .tk-editor-content) ul {
   list-style: disc;
 }
 
-.tk-content ol {
+:where(.tk-content, .tk-editor-content) ol {
   list-style: decimal;
 }
 
-.tk-content li {
+:where(.tk-content, .tk-editor-content) li {
   margin: 0.375em 0;
 }
 
-.tk-content li > p {
+:where(.tk-content, .tk-editor-content) li > p {
   margin: 0.25em 0;
 }
 
-.tk-content li > ul,
-.tk-content li > ol {
+:where(.tk-content, .tk-editor-content) li > ul,
+:where(.tk-content, .tk-editor-content) li > ol {
   margin: 0.25em 0;
 }
 
-.tk-content blockquote {
+:where(.tk-content, .tk-editor-content) blockquote {
   margin: 1em 0;
   padding: 0.25em 0 0.25em 1em;
   border-left: 3px solid var(--tk-border);
   color: var(--tk-text-muted);
 }
 
-.tk-content hr {
+:where(.tk-content, .tk-editor-content) hr {
   margin: 1.75em 0;
   border: 0;
   border-top: 1px solid var(--tk-border);
 }
 
-.tk-content img {
+:where(.tk-content, .tk-editor-content) img {
   max-width: 100%;
   height: auto;
   border-radius: var(--tk-radius-block);
@@ -198,8 +198,7 @@
   background: var(--tk-card);
 }
 
-.tk-content table,
-.tk-editor table {
+:where(.tk-content, .tk-editor-content, .tk-editor) table {
   border-collapse: collapse;
   width: 100%;
   min-width: 100%;
@@ -208,34 +207,30 @@
   font-size: 0.75rem;
 }
 
-.tk-content thead,
-.tk-editor thead {
+:where(.tk-content, .tk-editor-content, .tk-editor) thead {
   background: var(--tk-surface-low);
   color: var(--tk-text-main);
   font-weight: 600;
 }
 
-.tk-content thead tr,
-.tk-editor thead tr {
+:where(.tk-content, .tk-editor-content, .tk-editor) thead tr {
   border-bottom: 1px solid color-mix(in srgb, var(--tk-table-border) 60%, transparent);
 }
 
-.tk-content tbody tr {
+:where(.tk-content, .tk-editor-content, .tk-editor) tbody tr {
   border-bottom: 1px solid color-mix(in srgb, var(--tk-table-border) 40%, transparent);
   transition: background-color 0.15s ease;
 }
 
-.tk-content tbody tr:hover {
+:where(.tk-content, .tk-editor-content, .tk-editor) tbody tr:hover {
   background: color-mix(in srgb, var(--tk-surface-low) 40%, transparent);
 }
 
-.tk-content tbody,
-.tk-editor tbody {
+:where(.tk-content, .tk-editor-content, .tk-editor) tbody {
   color: var(--tk-text-body);
 }
 
-.tk-content th,
-.tk-editor th {
+:where(.tk-content, .tk-editor-content, .tk-editor) th {
   padding: var(--tk-table-cell-padding-y) var(--tk-table-cell-padding-x);
   font-size: 0.75rem;
   font-weight: 600;
@@ -244,29 +239,25 @@
   white-space: nowrap;
 }
 
-.tk-content td,
-.tk-editor td {
+:where(.tk-content, .tk-editor-content, .tk-editor) td {
   padding: var(--tk-table-cell-padding-y) var(--tk-table-cell-padding-x);
   font-size: 0.75rem;
   color: var(--tk-text-body);
   border-right: 1px solid color-mix(in srgb, var(--tk-table-border) 40%, transparent);
 }
 
-.tk-content th:last-child,
-.tk-content td:last-child,
-.tk-editor th:last-child,
-.tk-editor td:last-child {
+:where(.tk-content, .tk-editor-content, .tk-editor) th:last-child,
+:where(.tk-content, .tk-editor-content, .tk-editor) td:last-child {
   border-right: 0;
 }
 
 /* 表格列宽以 <colgroup><col width> 为准，不用 width:100% 覆盖列组 */
-.tk-content colgroup,
-.tk-editor colgroup {
+:where(.tk-content, .tk-editor-content, .tk-editor) colgroup {
   width: auto;
 }
 
 /* ── 代码 ──────────────────────────────────────────────────────────────────── */
-.tk-content :not(pre) > code {
+:where(.tk-content, .tk-editor-content) :not(pre) > code {
   border-radius: var(--tk-radius-chip);
   background: var(--tk-bg);
   padding: 2px 4px;
@@ -276,7 +267,7 @@
   border: 1px solid color-mix(in srgb, var(--tk-border) 30%, transparent);
 }
 
-.tk-content pre {
+:where(.tk-content, .tk-editor-content) pre {
   margin: 1em 0;
   overflow-x: auto;
   border-radius: 12px;
@@ -288,7 +279,7 @@
   font-family: var(--tk-font-mono);
 }
 
-.tk-content pre code {
+:where(.tk-content, .tk-editor-content) pre code {
   padding: 0;
   border: 0;
   background: transparent;
@@ -297,12 +288,12 @@
 }
 
 /* ── 链接 ──────────────────────────────────────────────────────────────────── */
-.tk-content a {
+:where(.tk-content, .tk-editor-content) a {
   color: var(--tk-tertiary);
   text-decoration: none;
 }
 
-.tk-content a:hover {
+:where(.tk-content, .tk-editor-content) a:hover {
   text-decoration: underline;
 }
 
@@ -368,14 +359,22 @@
   height: auto;
 }
 
+.tk-editor-box--fixed {
+  flex: 0 0 auto;
+}
+
 .tk-editor-box--dragging {
   border-color: #f59e0b;
   box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
 }
 
 .tk-editor-box--disabled {
-  opacity: 0.65;
-  pointer-events: none;
+  cursor: default;
+}
+
+.tk-editor-box--disabled .ProseMirror {
+  cursor: text;
+  user-select: text;
 }
 
 .tk-editor-area {
@@ -391,6 +390,33 @@
 
 .tk-editor-area--auto {
   height: auto;
+}
+
+.tk-editor-area--fixed {
+  flex: 0 0 auto;
+  overflow-y: auto;
+}
+
+.tk-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--tk-text-muted);
+  border-top: 1px solid var(--tk-border);
+  user-select: none;
+  background: var(--tk-card);
+}
+
+.tk-editor-footer-tips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tk-editor-footer-count {
+  margin-left: auto;
 }
 
 .tk-editor-hidden-textarea {
@@ -487,12 +513,15 @@
   cursor: text;
 }
 
-.tk-editor-content .ProseMirror {
+.tk-editor-content.ProseMirror,
+.tk-editor-content {
   outline: none;
   min-height: 140px;
 }
 
-.tk-editor-content .ProseMirror p.is-editor-empty:first-child::before {
+:where(.tk-editor-content).ProseMirror p.is-editor-empty:first-child::before,
+:where(.tk-editor-content) p.is-editor-empty:first-child::before,
+.ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
   color: var(--tk-text-muted);

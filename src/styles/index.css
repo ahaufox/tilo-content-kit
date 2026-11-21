@@ -46,6 +46,11 @@
   --tk-font-size-h4: 1rem;
   --tk-line-height-body: 1.7;
   --tk-line-height-heading: 1.35;
+  --tk-font-weight-heading: 600;
+  --tk-paragraph-margin: 0.75em 0;
+  /* 编辑器外框聚焦边框与光环（默认对齐琥珀高光色，可运行时覆盖） */
+  --tk-editor-focus-border: rgba(245, 158, 11, 0.6);
+  --tk-editor-focus-ring: 0 0 0 2px rgba(245, 158, 11, 0.2);
   /* 版心（打印）：缺省 0 保证现有外观不变，消费点在 .tk-content；
      后端按文书模板页边距（document-template.ts）运行时下发后生效 */
   --tk-page-padding-x: 0;
@@ -75,7 +80,7 @@
 }
 
 :where(.tk-content, .tk-editor-content) p {
-  margin: 0.75em 0;
+  margin: var(--tk-paragraph-margin, 0.75em 0);
 }
 
 :where(.tk-content, .tk-editor-content) h1,
@@ -86,7 +91,7 @@
 :where(.tk-content, .tk-editor-content) h6 {
   margin: 1.4em 0 0.6em;
   color: var(--tk-text-main);
-  font-weight: 600;
+  font-weight: var(--tk-font-weight-heading, 600);
   font-family: var(--tk-font-family-heading);
   line-height: var(--tk-line-height-heading);
 }
@@ -347,6 +352,11 @@
   overflow: hidden;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tk-editor-box:focus-within:not(.tk-editor-box--disabled) {
+  border-color: var(--tk-editor-focus-border, rgba(245, 158, 11, 0.6));
+  box-shadow: var(--tk-editor-focus-ring, 0 0 0 2px rgba(245, 158, 11, 0.2));
 }
 
 .tk-editor-box--full {

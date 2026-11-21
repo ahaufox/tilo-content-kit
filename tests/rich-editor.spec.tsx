@@ -233,4 +233,13 @@ describe('RichEditor', () => {
     );
     expect(document.querySelector('.tk-table-bubble-menu')).toBeNull();
   });
+
+  it('W4 验证：源码包含 .tk-editor-box:focus-within 聚焦边框与光环样式，且 disabled 态安全隔离', () => {
+    const cssPath = path.resolve(__dirname, '../src/styles/index.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+
+    // 匹配 .tk-editor-box:focus-within
+    expect(cssContent).toMatch(/\.tk-editor-box:focus-within:not\(\.tk-editor-box--disabled\)\s*\{[^}]*border-color:/);
+    expect(cssContent).toMatch(/\.tk-editor-box:focus-within:not\(\.tk-editor-box--disabled\)\s*\{[^}]*box-shadow:/);
+  });
 });

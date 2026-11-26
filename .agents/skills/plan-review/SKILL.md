@@ -48,7 +48,7 @@ triggers:
    ```bash
    python3 .agents/skills/plan-review/scripts/plan_audit_guard.py <目标任务目录或plan.md> --format=markdown
    ```
-2. **读方案**：目录模式读取 spec.md / plan.md / data-model.md / contracts/ 等全套；单文件模式提取背景、技术路线、改动文件清单。
+2. **读方案**：目录模式读取 spec.md / plan.md / tasks.md（历史专案若含补充文档按需兼读）；单文件模式提取背景、技术路线、改动文件清单。
 3. **核代码**：打开脚本标为 `FAIL` / `DANGER` 的文件核实现状；grep 检索函数调用点与事件监听链路；验证方案依赖的组件、Hook、后端接口是否真实存在。所有问题必须落到真实文件路径与行号，禁止凭空揣测。
 4. **输出**：按下方格式写落盘报告；对话回复只给结论 + 问题清单。
 

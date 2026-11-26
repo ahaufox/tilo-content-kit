@@ -4,7 +4,7 @@
 plan_audit_guard.py — 方案与实施计划前置自动化静态审计工具 (增强版)
 
 核心功能：
-  1. 结构完备性探测：自动识别并验证待办三件套（spec.md, plan.md, data-model.md, contracts/ 等）；
+  1. 结构完备性探测：自动识别并验证待办三件套（spec.md, plan.md, tasks.md）；
   2. 源码防腐门禁审计：自动提取方案中提及的源码文件，统计真实物理行数并与架构门禁比对（包含已超标 FAIL 与高危濒临超标 DANGER）；
   3. 文档内部引用死链审计：智能过滤正则表达式与协议，精准探测失效的相对路径；
   4. 复审对账感知：自动探测既有历史审查报告（plan-review.md），提取初审结论与待整改项；
@@ -16,6 +16,7 @@ plan_audit_guard.py — 方案与实施计划前置自动化静态审计工具 (
 """
 
 import re
+import os
 import sys
 import json
 import argparse
@@ -55,6 +56,37 @@ def find_repo_root(start_path: Path) -> Path:
 SUBREPO_NAMES = ("frontend-v2", "tilo-backend-app", "tilo-core-engine", "admin-frontend", "prod-dev-ops")
 
 
+def _module_test_roots(repo_root: Path) -> List[Path]:
+    """收集子仓内直接包含 `tests/` 目录的模块根，用于解析模块相对写法的 `tests/...` 引用。
+
+    方案文档常以「进入模块目录后执行」的相对路径书写测试文件（如
+    `tests/test_master_copilot_evidence_directory_prompt.py`），这类路径在仓库根
+    无法定位，需以各模块根为候选基址重试。
+    """
+    roots: List[Path] = []
+    skip_dirs = {
+        ".git", ".venv", "node_modules", "__pycache__", "dist", "build",
+        ".mypy_cache", ".pytest_cache", ".ruff_cache", "coverage", ".next",
+    }
+    for name in ("tilo-core-engine", "tilo-backend-app", "admin-frontend"):
+        sub = repo_root / name
+        if not sub.is_dir():
+            continue
+        for current, dirnames, _ in os.walk(sub):
+            dirnames[:] = [d for d in dirnames if d not in skip_dirs]
+            if "tests" in dirnames:
+                roots.append(Path(current))
+    return roots
+
+
+def _draft_version_key(path: Path) -> Tuple[int, int]:
+    """按版本/编号排序审查底稿：`plan-review-2.0.md` > `plan-review-1.9.md` > `plan-review.md`。"""
+    match = re.search(r"(\d+)(?:\.(\d+))?", path.stem)
+    if not match:
+        return (-1, -1)
+    return (int(match.group(1)), int(match.group(2) or 0))
+
+
 def count_file_lines(file_path: Path) -> int:
     """统计物理文件的行数"""
     if not file_path.is_file():
@@ -67,7 +99,7 @@ def count_file_lines(file_path: Path) -> int:
 
 
 def _candidate_bases(repo_root: Path) -> List[Path]:
-    """候选解析基址：仓库根 → 主仓根（父目录）→ 各子仓根 → SDK 子仓根。"""
+    """候选解析基址：仓库根 → 主仓根（父目录）→ 各子仓根 → 子仓服务根 → SDK 子仓根。"""
     bases: List[Path] = [repo_root]
     parent = repo_root.parent
     if parent != repo_root:
@@ -76,11 +108,16 @@ def _candidate_bases(repo_root: Path) -> List[Path]:
         child = repo_root / name
         if child.is_dir():
             bases.append(child)
+            # 服务根（如 tilo-backend-app/backend）用于解析裸 `tests/...` 写法
+            for service_root in ("backend", "app"):
+                if (child / service_root).is_dir():
+                    bases.append(child / service_root)
     for sdk_root in (repo_root / "sdks", parent / "sdks"):
         if sdk_root.is_dir():
             for sdk_child in sorted(sdk_root.iterdir()):
                 if sdk_child.is_dir():
                     bases.append(sdk_child)
+    bases.extend(_module_test_roots(repo_root))
     return bases
 
 
@@ -123,14 +160,17 @@ def extract_referenced_code_paths(content: str, repo_root: Path) -> List[Tuple[s
     results = []
     seen = set()
 
+    # 路径字符类需覆盖 React Router 约定：并行路由段 `(main)` 与动态段 `[id]`，
+    # 否则 `frontend-v2/src/app/(main)/cases/[id]/...` 一律无法被识别。
+    _SEG = r"[a-zA-Z0-9_\-\./()\[\]]"
     pattern = re.compile(
-        r"""(?x)
+        rf"""(?x)
         (?P<path>
-            (?:file://)?/?[a-zA-Z0-9_\-\./]*
+            (?:file://)?/?{_SEG}*
             (?:frontend-v2|tilo-backend-app|backend|tilo-core-engine|admin-frontend|prod-dev-ops)
-            /[a-zA-Z0-9_\-\./]+\.[a-zA-Z0-9]+
+            /{_SEG}+\.[a-zA-Z0-9]+
           |
-            (?:src|tests|sdks|scripts)/[a-zA-Z0-9_\-\./]+\.[a-zA-Z0-9]+
+            (?:src|tests|sdks|scripts)/{_SEG}+\.[a-zA-Z0-9]+
         )
         """
     )
@@ -141,7 +181,7 @@ def extract_referenced_code_paths(content: str, repo_root: Path) -> List[Tuple[s
 
         rel_str, abs_path = _resolve_referenced_path(raw, repo_root)
 
-        if any(rel_str.endswith(ext) for ext in [".ts", ".tsx", ".py", ".js", ".jsx", ".css", ".sql"]):
+        if any(rel_str.endswith(ext) for ext in [".ts", ".tsx", ".py", ".js", ".jsx", ".css", ".sql", ".yml", ".yaml", ".json"]):
             if rel_str not in seen:
                 seen.add(rel_str)
                 results.append((rel_str, abs_path))
@@ -231,19 +271,17 @@ def audit_plan_structure(target_path: Path, repo_root: Path) -> Dict[str, Any]:
             "blockers_count": 0,
             "danger_count": 0,
             "warnings_count": 0,
-            "total_files_audited": 0
+            "total_files_audited": 0,
+            "unresolved_count": 0
         }
     }
 
-    # 1. 结构完备性探测
+    # 1. 结构完备性探测（固定三件套模型：spec.md / plan.md / tasks.md）
     if is_dir:
         expected_docs = {
-            "spec.md": "需求规格说明书 (Spec)",
-            "plan.md": "技术实施方案 (Plan)",
-            "data-model.md": "数据模型与状态机契约 (Data Model)",
-            "contracts": "契约接口目录 (Contracts)",
-            "quickstart.md": "快速启动与验证规范 (Quickstart)",
-            "research.md": "技术调研与决策备忘 (Research)"
+            "spec.md": "需求规格 (Spec)",
+            "plan.md": "实施方案 (Plan)",
+            "tasks.md": "任务与验收清单 (Tasks & AC)",
         }
         for doc_name, desc in expected_docs.items():
             doc_p = plan_dir / doc_name
@@ -255,13 +293,17 @@ def audit_plan_structure(target_path: Path, repo_root: Path) -> Dict[str, Any]:
             }
             if not exists and doc_name in ["spec.md", "plan.md"]:
                 report["summary"]["blockers_count"] += 1
-            elif not exists and doc_name in ["data-model.md", "contracts"]:
-                report["summary"]["warnings_count"] += 1
 
         # 检查是否存在历史审查报告
+        # 优先单一 SSOT `plan-review.md`；缺失时回退到版本化底稿（plan-review-{x}.md）最新者，
+        # 以兼容按版本化命名产出底稿的审查流程。
         prior_review_p = plan_dir / "plan-review.md"
         if not prior_review_p.exists():
-            prior_review_p = plan_dir / "review-report.md"
+            versioned_drafts = sorted(plan_dir.glob("plan-review-*.md"))
+            if versioned_drafts:
+                prior_review_p = max(versioned_drafts, key=_draft_version_key)
+            else:
+                prior_review_p = plan_dir / "review-report.md"
         if prior_review_p.exists():
             report["prior_review"] = {
                 "exists": True,
@@ -344,6 +386,11 @@ def audit_plan_structure(target_path: Path, repo_root: Path) -> Dict[str, Any]:
         elif exists and threshold_info["status"] == "WARN":
             report["summary"]["warnings_count"] += 1
 
+    # 未能在仓库中定位的引用路径单独计数，避免被计入「已审计」口径而静默漏审
+    report["summary"]["unresolved_count"] = sum(
+        1 for item in report["referenced_files"] if not item["exists"]
+    )
+
     return report
 
 
@@ -355,9 +402,20 @@ def format_markdown_report(data: Dict[str, Any]) -> str:
     """
     s = data["summary"]
     lines = []
-    lines.append(
-        f"### 前置审计 (Plan Audit Guard): 阻断 {s['blockers_count']} / 高危 {s['danger_count']} / 警告 {s['warnings_count']} / 引用源码 {s['total_files_audited']} 个"
+    unresolved = s.get("unresolved_count", 0)
+    resolved_suffix = (
+        f"（成功解析 {s['total_files_audited'] - unresolved} / 未解析 {unresolved}）"
+        if unresolved
+        else ""
     )
+    lines.append(
+        f"### 前置审计 (Plan Audit Guard): 阻断 {s['blockers_count']} / 高危 {s['danger_count']} / 警告 {s['warnings_count']} / 引用源码 {s['total_files_audited']} 个{resolved_suffix}"
+    )
+
+    if unresolved:
+        lines.append(
+            f"- ⚠️ 有 {unresolved} 条引用路径未能在仓库中定位，已排除出审计范围，需人工核对"
+        )
 
     if data.get("prior_review"):
         prior_path = data["prior_review"]["path"]
@@ -388,6 +446,9 @@ def format_markdown_report(data: Dict[str, Any]) -> str:
         lines.append("#### 断链（计划路径不存在）")
         for bl in data["broken_links"][:10]:
             lines.append(f"- `{bl['source_doc']}` → `{bl['target_link']}`")
+        remaining_links = len(data["broken_links"]) - 10
+        if remaining_links > 0:
+            lines.append(f"- …另有 {remaining_links} 条断链未展开")
 
     return "\n".join(lines)
 

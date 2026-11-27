@@ -357,6 +357,72 @@ export function calculateTableColumnWidths(
  * @param totalWidthPx - 表格总宽度（默认 A4 版心 553px）
  * @returns 注入列宽属性后的 HTML 字符串
  */
+interface ParsedTableCell {
+  tag: string;
+  attrs: string;
+  inner: string;
+  row: number;
+  col: number;
+  colspan: number;
+  rowspan: number;
+}
+
+interface ParsedTableGrid {
+  rows: string[][];
+  cells: ParsedTableCell[];
+  width: number;
+}
+
+function parseSpanAttr(attrs: string, name: 'colspan' | 'rowspan'): number {
+  const match = attrs.match(new RegExp(`${name}\\s*=\\s*["']?(\\d+)`, 'i'));
+  return match ? Math.max(1, parseInt(match[1], 10)) : 1;
+}
+
+/** 按 colspan/rowspan 解析逻辑网格：跨格占位、rowspan 跨行顺延。 */
+function parseTableGrid(tableInner: string): ParsedTableGrid {
+  const rows: string[][] = [];
+  const cells: ParsedTableCell[] = [];
+  const remaining: number[] = [];
+  let width = 0;
+  let rowIdx = 0;
+
+  const trRegex = /<tr\b([^>]*)>([\s\S]*?)<\/tr>/gi;
+  let trMatch: RegExpExecArray | null;
+  while ((trMatch = trRegex.exec(tableInner)) !== null) {
+    const row: string[] = [];
+    let col = 0;
+    const cellRegex = /<(th|td)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+    let cellMatch: RegExpExecArray | null;
+    while ((cellMatch = cellRegex.exec(trMatch[2])) !== null) {
+      while ((remaining[col] ?? 0) > 0) col += 1;
+      const tag = cellMatch[1];
+      const attrs = cellMatch[2];
+      const inner = cellMatch[3];
+      const colspan = parseSpanAttr(attrs, 'colspan');
+      const rowspan = parseSpanAttr(attrs, 'rowspan');
+      cells.push({ tag, attrs, inner, row: rowIdx, col, colspan, rowspan });
+      row[col] = inner.replace(/<[^>]+>/g, '').trim();
+      for (let dc = 0; dc < colspan; dc += 1) {
+        remaining[col + dc] = Math.max(remaining[col + dc] ?? 0, rowspan);
+      }
+      col += colspan;
+      width = Math.max(width, col);
+    }
+    rows.push(row);
+    for (let c = 0; c < remaining.length; c += 1) {
+      if (remaining[c] > 0) remaining[c] -= 1;
+    }
+    rowIdx += 1;
+  }
+
+  for (const row of rows) {
+    for (let c = 0; c < width; c += 1) {
+      if (row[c] === undefined) row[c] = '';
+    }
+  }
+  return { rows, cells, width };
+}
+
 export function injectTableWidthsToHtml(
   html: string,
   totalWidthPx: number = DEFAULT_TABLE_WIDTH_PX
@@ -371,29 +437,10 @@ export function injectTableWidthsToHtml(
         return match;
       }
 
-      // 提取所有 <tr> 行中的 <th> 或 <td> 文本
-      const rows: string[][] = [];
-      const trRegex = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
-      let trMatch: RegExpExecArray | null;
+      const grid = parseTableGrid(tableInner);
+      if (grid.rows.length === 0) return match;
 
-      while ((trMatch = trRegex.exec(tableInner)) !== null) {
-        const rowContent = trMatch[1];
-        const cells: string[] = [];
-        const cellRegex = /<(?:th|td)\b[^>]*>([\s\S]*?)<\/(?:th|td)>/gi;
-        let cellMatch: RegExpExecArray | null;
-        while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
-          // 剥离内部 HTML 标签以获取纯文本用于计算宽度
-          const cellText = cellMatch[1].replace(/<[^>]+>/g, '').trim();
-          cells.push(cellText);
-        }
-        if (cells.length > 0) {
-          rows.push(cells);
-        }
-      }
-
-      if (rows.length === 0) return match;
-
-      const colwidths = calculateTableColumnWidths(rows, totalWidthPx);
+      const colwidths = calculateTableColumnWidths(grid.rows, totalWidthPx);
       if (!colwidths || colwidths.length === 0) return match;
 
       // 构造 colgroup
@@ -405,25 +452,29 @@ export function injectTableWidthsToHtml(
         ? `${cleanTableAttrs} colwidth='${JSON.stringify(colwidths)}'`
         : `colwidth='${JSON.stringify(colwidths)}'`;
 
-      // 在 thead/tbody 内部各单元格注入 colwidth
+      // 按逻辑列注入：colspan 单元格写入多列宽度，rowspan 后续行跳过占位列。
+      let cellCursor = 0;
       const updatedInner = tableInner.replace(
         /<tr\b([^>]*)>([\s\S]*?)<\/tr>/gi,
         (_rowMatch: string, rowAttrs: string, rowContent: string) => {
-          let cellIdx = 0;
           const updatedRowContent = rowContent.replace(
             /<(th|td)\b([^>]*)>([\s\S]*?)<\/\1>/gi,
             (cellMatch: string, tag: string, cellAttrs: string, cellInner: string) => {
-              const w = colwidths[cellIdx] || null;
-              cellIdx++;
-              if (!w || /colwidth=/i.test(cellAttrs)) return cellMatch;
-              const styleAttr = tag.toLowerCase() === 'th' ? ` style="width: ${w}px;"` : '';
-              return `<${tag}${cellAttrs} colwidth="${w}"${styleAttr}>${cellInner}</${tag}>`;
+              const parsed = grid.cells[cellCursor];
+              cellCursor += 1;
+              if (!parsed) return cellMatch;
+              const widths = colwidths
+                .slice(parsed.col, parsed.col + parsed.colspan)
+                .filter((w): w is number => typeof w === 'number' && w > 0);
+              if (widths.length === 0 || /colwidth=/i.test(cellAttrs)) return cellMatch;
+              const styleWidth = widths.reduce((sum, w) => sum + w, 0);
+              const styleAttr = tag.toLowerCase() === 'th' ? ` style="width: ${styleWidth}px;"` : '';
+              return `<${tag}${cellAttrs} colwidth="${widths.join(',')}"${styleAttr}>${cellInner}</${tag}>`;
             }
           );
           return `<tr${rowAttrs}>${updatedRowContent}</tr>`;
         }
       );
-
       // 检查是否已有 <colgroup>，若无则插入到表格开头
       const finalInner = /<colgroup/i.test(updatedInner)
         ? updatedInner

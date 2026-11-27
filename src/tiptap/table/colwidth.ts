@@ -29,12 +29,16 @@ export function getTableColwidthFromCells(tableNode: PMNode): (number | null)[] 
   let hasAny = false;
 
   firstRow.forEach((cell) => {
+    const colspan = typeof cell.attrs.colspan === 'number' ? cell.attrs.colspan : 1;
     const cw = cell.attrs.colwidth;
-    if (Array.isArray(cw) && cw.length > 0 && typeof cw[0] === 'number' && cw[0] > 0) {
-      colwidths.push(cw[0]);
-      hasAny = true;
-    } else {
-      colwidths.push(null);
+    for (let i = 0; i < colspan; i += 1) {
+      const width = Array.isArray(cw) ? cw[i] : null;
+      if (typeof width === 'number' && width > 0) {
+        colwidths.push(width);
+        hasAny = true;
+      } else {
+        colwidths.push(null);
+      }
     }
   });
 
@@ -81,14 +85,30 @@ export function parseTableColwidthAttr(element: HTMLElement): (number | null)[] 
 
 /** 计算单元格在所在行中的列索引（考虑 colspan）。 */
 export function getCellColumnIndex(element: HTMLElement): number {
-  const row = element.parentElement;
-  if (!row) return -1;
-  const children = Array.from(row.children);
-  let index = 0;
-  for (const child of children) {
-    if (child === element) return index;
-    const colspan = parseInt(child.getAttribute('colspan') || '1', 10);
-    index += colspan;
+  const row = element.parentElement as HTMLTableRowElement | null;
+  const table = element.closest('table');
+  if (!row || !table) return -1;
+
+  // 逐行维护 rowspan 占位，避免上一行纵向合并导致当前行列索引偏移。
+  const remaining: number[] = [];
+  const rows = Array.from(table.querySelectorAll('tr'));
+  for (const current of rows) {
+    let col = 0;
+    for (const cell of Array.from(current.children)) {
+      if (!(cell instanceof HTMLElement)) continue;
+      while ((remaining[col] ?? 0) > 0) col += 1;
+      if (current === row && cell === element) return col;
+      const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
+      const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+      for (let dc = 0; dc < colspan; dc += 1) {
+        remaining[col + dc] = Math.max(remaining[col + dc] ?? 0, rowspan);
+      }
+      col += colspan;
+    }
+    for (let c = 0; c < remaining.length; c += 1) {
+      if (remaining[c] > 0) remaining[c] -= 1;
+    }
+    if (current === row) break;
   }
   return -1;
 }
@@ -106,23 +126,41 @@ export function parseCellColwidth(element: HTMLElement): number[] | null {
   if (!table) return null;
 
   // 优先读取父 table 的 colwidth 属性
+  const colspan = Math.max(1, parseInt(element.getAttribute('colspan') || '1', 10));
+  const colIndex = getCellColumnIndex(element);
+
   const tableColwidth = parseTableColwidthAttr(element);
-  if (tableColwidth) {
-    const colIndex = getCellColumnIndex(element);
-    if (colIndex >= 0 && tableColwidth[colIndex] != null) {
-      return [tableColwidth[colIndex]];
-    }
+  if (tableColwidth && colIndex >= 0) {
+    const widths = tableColwidth
+      .slice(colIndex, colIndex + colspan)
+      .filter((w): w is number => typeof w === 'number' && w > 0);
+    if (widths.length > 0) return widths;
   }
 
   // 兼容旧文档/外部粘贴：从 <colgroup>/<col> 解析
-  const cols = table.querySelectorAll('colgroup > col');
-  const cellIndex = Array.from(table.querySelectorAll('tr:first-child > th, tr:first-child > td')).indexOf(element);
-  if (cellIndex > -1 && cols[cellIndex]) {
-    const colEl = cols[cellIndex] as HTMLElement;
-    const width = colEl.getAttribute('width') || colEl.style.width;
-    const match = width?.match(/^(\d+(?:\.\d+)?)px$/);
-    if (match) return [parseInt(match[1], 10)];
+  const cols = Array.from(table.querySelectorAll('colgroup > col'));
+  if (colIndex >= 0) {
+    const widths: number[] = [];
+    for (let i = 0; i < colspan; i += 1) {
+      const colEl = cols[colIndex + i] as HTMLElement | undefined;
+      const width = colEl?.getAttribute('width') || colEl?.style.width;
+      const match = width?.match(/^(\d+(?:\.\d+)?)px$/);
+      if (match) widths.push(parseInt(match[1], 10));
+    }
+    if (widths.length > 0) return widths;
   }
 
   return null;
+}
+
+/** 按跨列数从整表列宽数组中切出当前单元格的 colwidth。 */
+export function sliceColwidthForSpan(
+  tableColwidth: (number | null)[],
+  colIndex: number,
+  colspan: number,
+): number[] | null {
+  const widths = tableColwidth
+    .slice(colIndex, colIndex + colspan)
+    .filter((w): w is number => typeof w === 'number' && w > 0);
+  return widths.length > 0 ? widths : null;
 }

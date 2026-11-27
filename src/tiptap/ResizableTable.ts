@@ -29,6 +29,7 @@ import {
   expandTableColwidth,
   getTableColwidthFromCells,
   parseCellColwidth,
+  sliceColwidthForSpan,
 } from './table/colwidth';
 import { createHandleClickPlugin } from './table/handle-click';
 
@@ -135,7 +136,10 @@ export const ResizableTable = BaseTable.extend({
               const cellPos = pos + 2 + offset;
               cellUpdates.push({
                 pos: cellPos,
-                attrs: { ...cell.attrs, colwidth: [cw] },
+                attrs: {
+                    ...cell.attrs,
+                    colwidth: sliceColwidthForSpan(fromTable, colIndex, colspan),
+                  },
               });
             }
             colIndex += colspan;
@@ -245,7 +249,10 @@ export const ResizableTable = BaseTable.extend({
                   const cellPos = pos + 2 + offset;
                   cellUpdates.push({
                     pos: cellPos,
-                    attrs: { ...cell.attrs, colwidth: [cw] },
+                    attrs: {
+                    ...cell.attrs,
+                    colwidth: sliceColwidthForSpan(fromTable, colIndex, colspan),
+                  },
                   });
                 }
                 colIndex += colspan;

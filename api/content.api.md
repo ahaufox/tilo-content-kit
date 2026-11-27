@@ -2,7 +2,7 @@
 
 > 自动生成，请勿手改。刷新：`pnpm api:update`。校验：`pnpm api:check`。
 
-<!-- 类型摘要 sha256:ce46d4e65ab79fb9 -->
+<!-- 类型摘要 sha256:acba998143e55459 -->
 
 ## 运行时导出符号
 
@@ -165,13 +165,6 @@ declare function analyzeTableColumnDetails(rows: string[][], totalWidthPx?: numb
  * @returns 每列像素宽度数组，如 [60, 240, 460]
  */
 declare function calculateTableColumnWidths(rows: string[][], totalWidthPx?: number, explicitFixedWidths?: Record<number, number>): number[];
-/**
- * 遍历 HTML 字符串中的 <table> 标签，为未显式设置 colwidth 的表格注入智能计算的列宽与 <colgroup>
- *
- * @param html - 待处理的 HTML 字符串
- * @param totalWidthPx - 表格总宽度（默认 A4 版心 553px）
- * @returns 注入列宽属性后的 HTML 字符串
- */
 declare function injectTableWidthsToHtml(html: string, totalWidthPx?: number): string;
 
 export { BASE_MIN_COL_WIDTH_PX, BASE_PADDING_PX, CHAR_WIDTH_UNIT_PX, type ColumnAnalysis, type ColumnCategory, DEFAULT_TABLE_WIDTH_PX, EXTREME_OUTLIER_RATIO, FIRST_COL_WIDTH_PX, HEADER_WEIGHT_BOOST, INDEX_COL_MAX_WIDTH_PX, INDEX_COL_MIN_WIDTH_PX, INDEX_COL_WIDTH_PX, MAX_COL_RATIO, MAX_SAMPLE_ROWS, TABLE_COMPACT_HEADER_RE, TABLE_INDEX_HEADER_RE, TABLE_LONG_HEADER_RE, analyzeTableColumnDetails, calculateTableColumnWidths, containsDisguisedMarkdown, detectMarkdown, getPrintablePageWidthPx, injectTableWidthsToHtml, isBlockContent, isHtml, isHtmlSubstantivelyEmpty, isMarkdown, measureCellLength, sanitizeHtml };

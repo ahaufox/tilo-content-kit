@@ -1,76 +1,63 @@
 # .cnb.yml — tilo-content-kit（CNB: tilo-work/tilo-content-kit）
 #
 # 与 GitHub 侧 .github/workflows 组成双向镜像：
-#   - PR / push：跑与 GitHub Actions 一致的质量门禁；
-#   - push：把当前分支同步到 GitHub 镜像仓 ahaufox/tilo-content-kit；
+#   - PR / main.push：跑与 GitHub Actions 一致的质量门禁；
+#   - push（任意分支）：把当前分支同步到 GitHub 镜像仓 ahaufox/tilo-content-kit；
 #   - tag_push：把当前 Tag 同步到 GitHub。
 # 同步执行层统一为 scripts/ci/sync-mirror.sh，按 commit SHA 幂等跳过，避免两侧互推回环。
 #
 # 密钥：从密钥仓 github.yml 注入 GITHUB_TOKEN（需具备 ahaufox/tilo-content-kit 写权限）。
 #       env 优先于 imports，目标仓坐标由本文件的 SYNC_TARGET 固定，不使用密钥仓的 GITHUB_REPO。
 
+.content-kit-ci: &content-kit-ci
+  runner:
+    cpus: 2
+  docker:
+    image: node:22-bookworm
+    volumes:
+      - /root/.local/share/pnpm/store:cow
+  stages:
+    - name: 安装 pnpm
+      script: |
+        set -e
+        corepack enable || command -v pnpm >/dev/null 2>&1 || npm install -g pnpm@10.27.0 --registry=https://registry.npmmirror.com
+        pnpm config set update-notifier false
+        pnpm config set registry https://registry.npmmirror.com
+        pnpm config set store-dir /root/.local/share/pnpm/store
+    - name: 安装依赖
+      script: pnpm install --frozen-lockfile --prefer-offline
+    - name: 构建
+      script: pnpm build
+    - name: 类型检查
+      script: pnpm typecheck
+    - name: 单元测试
+      script: pnpm test
+    - name: 公共 API 快照校验
+      script: pnpm api:check
+    - name: Demo 站构建校验
+      script: |
+        set -e
+        if [ -f demo/package.json ]; then
+          VITE_PAGES_BASE=/tilo-content-kit/ pnpm --filter @tilo-ui/content-kit-docs build
+        else
+          echo ">> demo/ 尚未入库，跳过 Demo 站构建"
+        fi
+
 "**":
   pull_request:
     - name: content-kit-ci-gate
-      docker:
-        image: node:22
-      stages:
-        - name: 安装 pnpm
-          script: |
-            set -e
-            command -v pnpm >/dev/null 2>&1 || npm install -g pnpm@10.27.0
-            pnpm config set update-notifier false
-        - name: 安装依赖
-          script: pnpm install --frozen-lockfile
-        - name: 构建
-          script: pnpm build
-        - name: 类型检查
-          script: pnpm typecheck
-        - name: 单元测试
-          script: pnpm test
-        - name: 公共 API 快照校验
-          script: pnpm api:check
-        - name: Demo 站构建校验
-          script: |
-            set -e
-            if [ -f demo/package.json ]; then
-              VITE_PAGES_BASE=/tilo-content-kit/ pnpm --filter @tilo-ui/content-kit-docs build
-            else
-              echo ">> demo/ 尚未入库，跳过 Demo 站构建"
-            fi
+      <<: *content-kit-ci
+      lock:
+        key: "content-kit-pr-${CNB_PULL_REQUEST_IID}"
+        cancel-in-progress: true
 
   push:
-    - name: content-kit-ci-gate
-      docker:
-        image: node:22
-      stages:
-        - name: 安装 pnpm
-          script: |
-            set -e
-            command -v pnpm >/dev/null 2>&1 || npm install -g pnpm@10.27.0
-            pnpm config set update-notifier false
-        - name: 安装依赖
-          script: pnpm install --frozen-lockfile
-        - name: 构建
-          script: pnpm build
-        - name: 类型检查
-          script: pnpm typecheck
-        - name: 单元测试
-          script: pnpm test
-        - name: 公共 API 快照校验
-          script: pnpm api:check
-        - name: Demo 站构建校验
-          script: |
-            set -e
-            if [ -f demo/package.json ]; then
-              VITE_PAGES_BASE=/tilo-content-kit/ pnpm --filter @tilo-ui/content-kit-docs build
-            else
-              echo ">> demo/ 尚未入库，跳过 Demo 站构建"
-            fi
-
     - name: sync-to-github
-      docker:
-        image: node:22
+      runner:
+        cpus: 1
+      lock:
+        key: "sync-to-github-${CNB_BRANCH}"
+        cancel-in-progress: true
       env:
         SYNC_TARGET: https://github.com/ahaufox/tilo-content-kit.git
         SYNC_AUTH_USER: x-access-token
@@ -84,11 +71,19 @@
             export SYNC_BRANCH="$CNB_BRANCH"
             bash scripts/ci/sync-mirror.sh
 
+main:
+  push:
+    - name: content-kit-ci-gate
+      <<: *content-kit-ci
+      lock:
+        key: content-kit-main-ci
+        cancel-in-progress: true
+
 $:
   tag_push:
     - name: sync-tag-to-github
-      docker:
-        image: node:22
+      runner:
+        cpus: 1
       env:
         SYNC_TARGET: https://github.com/ahaufox/tilo-content-kit.git
         SYNC_AUTH_USER: x-access-token

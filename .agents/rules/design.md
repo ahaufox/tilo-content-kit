@@ -59,11 +59,8 @@ globs: "src/components/**/*, src/app/**/*, src/**/*.css, src/**/*.scss"
 - 核心阅读与编辑场景高分屏下必须维持良好字号与行高对比。
 
 ## 6. 动效约束
-- **优先只动 `transform` 和 `opacity`**：避免对 `width`/`height`/`top`/`left` 做动画（性能与合成层考虑）。
-- **列表用 `variants` + `staggerChildren`**：避免手动计算 `transition.delay`。
-- **手势用 `whileHover`/`whileTap`**：替代手动状态管理。
-- **路由过渡用 `AnimatePresence mode="wait"`**：避免新旧内容重叠闪烁。
 - **过渡时长/缓动使用 Token**：`duration-*` / `ease-*` 语义类，禁止硬编码 `cubic-bezier` 或 `transition: all 0.3s`。
+- Framer Motion 通用用法（只动 `transform`/`opacity`、`variants` + `staggerChildren`、`whileHover`/`whileTap`、`AnimatePresence`）属库自身最佳实践，按官方文档执行，不在此逐条列举。
 
 ## 7. 弹窗与容器圆角规范 (Border Radius Standards)
 - **严禁无节制大圆角**：在专业严肃的法律工作台场景中，**严禁使用 `32px` 及以上的大圆角**（如历史遗留的 `rounded-[32px]`）。过大圆角会导致视觉失重、内容裁切与边角留白严重浪费。

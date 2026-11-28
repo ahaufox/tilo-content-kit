@@ -32,14 +32,7 @@ globs: "src/**/*"
   - 基础/通用原子卡片：`components/ui/v3/`（优先复用已有 V3 组件，禁止重复造轮子或使用 legacy V2 组件）。
   - 单一路由专用组件：`app/(main)/<route>/components/`。
   - 跨两个以上路由复用的业务 UI：`components/<domain>/`。
-  - **类型契约与静态映射 (`types/`, `constants/`)**：**豁免物理行数硬上限**，优先保持领域类型与常量集中管理 (SSOT)，严禁为凑指标机械切散。
-  - **页面级编排 (`page.tsx`)**：保持薄 Page，推荐 ≤ 150 行，弹性上限 250~350 行，数据与状态剥离至 Hook。
-  - **业务抽屉/弹窗/复杂面板 (`*Drawer.tsx`, `*Dialog.tsx`, `*Panel.tsx`, `*Workspace.tsx`)**：
-    - 推荐行数 ≤ 400 行，**弹性上限 700~800 行**。
-    - **薄视图原则（逻辑表现分离）**：API 请求、副作用与复杂数据处理必须下沉至 Hook/Store。若长行数纯属声明式 JSX 布局树、多 Tab 或样式排版，认知负荷低，原则上允许在单文件内声明；
-    - **反过度组件化与免拆原则**：严禁机械式把单处消费、无复用价值的私有视图（如局部头部、纯文案提示）强行拆成碎文件，增加跨文件传参与阅读成本；当且仅当包含多独立可拆卸模块（如文书工具箱多独立 Tab、复杂表单）时，才建议采用组合模式（Composition Pattern）拆分子目录。
-  - **自定义 Hook (`use*.ts`)**：
-    - 推荐行数 ≤ 250 行，**弹性上限 450 行**。单一关注点；长 Hook（如涉及流式监听、表单操作、撤销回滚多职责）必须按关注点拆解为专注的原子 Hook 并进行二次聚合。
+  - **体量分级与免拆原则**：统一阈值与「优先拆函数不拆文件」原则见 `global-standards.md §7`，本文件只约束目录归属。
 
 
 ## 4. Zustand 状态管理与 Slice 瘦身 (State Management)
@@ -72,7 +65,7 @@ globs: "src/**/*"
 - **C3：ActionButton Primitive 嵌套禁令**：使用 assistant-ui 或自定义 ActionButton（如 ScrollToBottom、Copy、Send）时，该类组件本身已渲染为 `<button>`，严禁在内部再嵌套 `<button>`（避免触发 HTML `validateDOMNesting` 报错）；自定义元素必须使用 `asChild` 或 render prop。
 - **C4：SPA 路由判定尾斜杠归一化**：在判定受控路由（如 `/user/login`）时，必须对 `pathname` 做尾斜杠去除归一化（如 `pathname.replace(/\/+$/, '')`），防止 Nginx 目录 301 重定向（`/user/login/`）导致前端路由判定失效引发登录死循环。
 - **C5：Tailwind 语义 Token 注册门禁**：在组件中使用派生语义类（如 `bg-modal-overlay`、`border-ghost-border`）前，必须确认已在 `globals.css` 的 `@theme inline` 声明，Tailwind v4 不会自动生成未注册的任意派生类。
-- **C6：全局展示命名空间契约 (Display Namespace Contract)**：页面与组件中所有用户可见文本、按钮文案、Tab 标签、弹窗标题、空态引导与 Toast 提示，必须严格遵守 `design.md §8` 全局用户界面与业务展示命名空间。严禁在 UI 显露“录入/清洗/交付物/物化/沙盒/驾驶舱/影响池/只读冻结/陈旧/沉淀/资产”等技术词；技术标识符（如 `cockpit*`、数据库字段）与 UI 文本必须严格分层。
+- **C6：全局展示命名空间契约 (Display Namespace Contract)**：页面与组件中所有用户可见文本、按钮文案、Tab 标签、弹窗标题、空态引导与 Toast 提示，必须严格遵守 `design.md §9` 全局用户界面与业务展示命名空间。严禁在 UI 显露“录入/清洗/交付物/物化/沙盒/驾驶舱/影响池/只读冻结/陈旧/沉淀/资产”等技术词；技术标识符（如 `cockpit*`、数据库字段）与 UI 文本必须严格分层。
 - **C7：分组列表与表格渲染键（Key）及去重作用域门禁**：在渲染多组分组表格、树形或分区列表时，跟踪已渲染实体的集合（`renderedSet`）或组件 `key` 必须携带父级分组命名空间（如 `${group.groupId}_${item.itemId}`），或直接使用对象引用追踪（`Set<ItemObject>`）。严禁使用无分组作用域的局部条目 ID（如可能由算法模型生成的 `cluster_1` 或分区局部 ID）进行整表跨组去重，杜绝因 ID 碰撞导致跨组的同名合法行被静默跳过或隐藏（178 复盘 G1）。
 
 ## 8. Custom Fetch 适配器规范 (Fetch Adapter)

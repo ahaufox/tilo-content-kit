@@ -10,25 +10,14 @@ globs: "**/.github/workflows/**/*, **/.husky/**/*, backend/scripts/**/*, ruff.to
 
 为了保证代码质量、提高协作效率，并确保 CI (GitHub Actions) 自动化检查顺利通过，降低因为格式不统一导致的代码冲突和 Review 成本，请所有开发人员和 AI Agent 严格遵循以下规范：
 
-## 1. 后端规范 (Python)
-后端统一使用 **Ruff** 作为 Lint 和 Format 工具，**MyPy** 作为静态类型检查工具。
+## 1. 后端工具链
+Ruff（Lint/Format）+ MyPy（类型检查），行宽 120；规则以 `ruff.toml` / `mypy.ini` 为准。
 
-- **格式化标准**: 遵循 Ruff 默认规则（类似于 Black 风格，但更快速）。
-- **行宽限制**: `120` 字符。
-- **建议要求**:
-    - 提交代码前，建议在 `backend` 目录下执行 `ruff check . --fix` 自动修复常见格式与导入错误。
-    - 提交代码前，建议执行 `mypy .` 确保无阻塞性的静态类型错误（当前配置已在 `mypy.ini` 中忽略了部分非关键的动态类型警告，但基础结构必须正确）。
+## 2. 前端工具链
+- **管理端 (admin-frontend)**：Biome，`npm run lint` 零 Error。
+- **用户端 (frontend-v2)**：ESLint（TypeScript + React 插件），配置以 `.eslintrc.cjs` 为准。
 
-## 2. 前端规范 (React/TypeScript)
-前端根据子项目不同，分别采用以下工具链，并且 CI 会进行严格拦截。
-
-### 2.1 管理端 (admin-frontend)
-- **工具链**: [Biome](https://biomejs.dev/)
-- **操作规范**: 提交前建议确保 `npm run lint` 没有 Error 级别的警告。
-
-### 2.2 用户端 (frontend-v2)
-- **工具链**: **ESLint** (结合 TypeScript 和 React 插件)
-- **操作规范**: 遵循 `.eslintrc.cjs` 中的配置，重点修复未使用变量、未定义类型等语法层面的错误。
+> 工具自身用法（`--fix`、忽略规则、格式化风格）按其官方文档执行，本文件不展开。
 
 ## 3. Git 提交规范 (Conventional Commits)
 

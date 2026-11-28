@@ -18,15 +18,7 @@ trigger: always_on
 
 - **格式标准**：`<type>(<scope>): <中文描述>` 或 `<type>: <中文描述>`
 - **强制中文**：描述必须使用中文撰写，简短概括，不超过 100 个字符。
-- **Type 候选词**：
-  - `feat`: 新功能
-  - `fix`: 修补 Bug
-  - `docs`: 文档变更
-  - `style`: 代码格式调整（不影响业务逻辑）
-  - `refactor`: 重构（既不修复 bug 也不添加特性的代码重构）
-  - `perf`: 性能优化
-  - `test`: 增加或修改测试
-  - `chore`: 构建过程或辅助工具的变动
+- **Type 候选词**：`feat` / `fix` / `docs` / `style` / `refactor` / `perf` / `test` / `chore`，语义按 Conventional Commits 标准，不在此重复展开。
 - **格式与特性分离**：自动化代码格式化变更必须使用 `style` 或 `chore`，**禁止**将其与 `feat` 或 `fix` 混合在同一个 Commit 中。
 
 ## 3. 推送目标 (Push Targets)

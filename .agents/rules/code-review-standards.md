@@ -8,28 +8,20 @@ globs: "*"
 
 > **Scope (Globs)**: `["*"]`
 
-## 1. 后端规则 (Python FastAPI)
-- **健壮性**: 核心逻辑使用标准异常捕获，外部资源（数据库 Session、文件）首选上下文管理器（`with`），严禁使用裸露 `except:`。
-- **安全性**: 统一使用 SQLAlchemy ORM 防止 SQL 注入；敏感路由必须注入 `Depends(get_current_user)` / `Depends(get_current_admin_user)` 鉴权。
-- **文档规范**: 函数、类和方法必须遵循 Google Style Docstrings 规范，详见 `backend-python-standards.md §8`。
+## 1. 后端通用约定
+Python/FastAPI 常规缺陷面（异常捕获、ORM 防注入、鉴权注入、Docstring 风格）以 `backend-python-standards.md` 为准，本文件不重复。
 
 ## 2. 数据模型 (SQLAlchemy)
-- 字段类型与长度与业务匹配（如 `String(255)`），非空约束（`nullable`）与默认值（`default`）明确。
-- 正确配置关系映射 `relationship` 与外键 `ForeignKey`，符合业务逻辑时声明级联删除（`cascade="all, delete-orphan"`）。
-- 高频查询与唯一性字段必须声明索引（`index=True`）。
+字段类型与长度、非空与默认值、关系映射与外键、索引声明属常规建模常识，评审以真实模型与 Alembic 迁移为准；项目约束见 `backend-database-standards.md`。
 
-## 3. API 与 RESTful 标准
-- **路径设计**：遵循 RESTful 规范（详见 `global-standards.md §6`），使用复数名词资源路径，严禁包含动词（如 `/api/v1/cases` 而非 `/api/get_case`）。
-- **统一响应**：业务端点显式声明 `response_model`，统一封装为 `UnifiedResponse` 格式，严禁返回裸字典。
+## 3. API 契约
+RESTful 路径与统一响应以 `backend-python-standards.md` §2.1、§3.2 及 `contracts/openapi-*.json` 导出产物为准。
 
-## 4. 前端规则 (React/Next.js)
-- **防御性渲染**: 深层嵌套的 API 响应数据使用可选链（`?.`）与默认兜底值。
-- **错误捕获**: 显式捕获 API 错误并向用户提供友好的 UI 反馈（Toast / EmptyState），严禁静默吞掉网络异常。
-- **资源清理**: 组件内定时器与全局事件监听器必须在 `useEffect` 清理函数中正确释放，防止内存泄漏。
+## 4. 前端通用约定
+可选链兜底、加载态反馈、监听器清理属 React 约定俗成实践，本文件不再逐条列举；项目特有架构约束见下。
 
 ### 4.1 frontend-v2 架构约束（见 `frontend-standards.md`）
-- **薄 Page**：`page.tsx` 建议 ≤ 150 行（弹性上限 250~350 行）；主要负责骨架布局与 Provider 挂载，数据请求统一收敛至 `lib/queries/` 或路由专属 hooks，严禁页面直连 API Client。
-- **体量审查与薄视图原则**：依文件职责分类审查。类型契约与静态映射豁免行数；业务抽屉/复杂面板（弹性上限 700~800 行）看逻辑与表现是否解耦（复杂状态/请求下沉至 Hook），允许声明式 JSX，严禁机械拆散仅单处引用的私有子视图（反过度组件化）。
+- **文件体量与薄视图阈值**：统一见 `global-standards.md §7`，本文件不重复。
 - **分层解耦**：格式化收敛至 `lib/format.ts`，领域数据标准化收敛至 `lib/normalize/*`。
 - **依赖方向**：`lib` 严禁反向 import `app/(main)/*/types`，跨层类型统一放入 `src/types/`。
 
@@ -38,7 +30,7 @@ globs: "*"
 - **后端 Python 验证**: `ruff check <files>`、`mypy <files> --config-file mypy.ini`、`pytest <test_file> -v`
 - **前端验证 (frontend-v2 / admin-frontend)**: `pnpm lint`、`pnpm typecheck`
 - **质量门禁**: 存在报错时优先排查修复，未通过静态检查不予判定审查通过。
-- **测试审查策略 (抓大放小 · 主干契约优先)**: 放弃防御性完美主义，严禁强求编写繁琐易碎的 UI 组件级单测，非核心 UI 瑕疵踩坑再修；仅在修改核心状态机、支付、关键落库等致死路径时，针对性验证对应 Playwright E2E 或高价值集成用例。
+- **测试审查策略**：统一见 `testing-tdd-skills-standards.md §1`（抓大放小、主干契约优先）。
 
 ### 5.1 修复复核证据（176 复盘）
 
@@ -63,7 +55,7 @@ globs: "*"
 - **兜底文书正文纯净化与插值防主体错位**：审查文书兜底/自适应生成模板，断言正文完全不含提示词工程内部的元指令/门禁词（“纯净化红线”、“事实四分尺度”、“门禁反模式”）；核查模板插值变量，严禁用文书自身标题（如《民事上诉状》）机械作为裁判主体造句。
 - **控制参数真实生效与双分支核查**：审查新增或重构的布尔控制参数（如 `fallback_to_template`），核实内部是否具备真实的分支逻辑，严禁死参数；单测必须分别覆盖 True/False 双态并断言行为差异。
 - **校验器分段切片与复合判定**：审查文书门禁校验器是否对特定段落做了切片提取（如仅在诉讼请求段校验，避免在事实理由段误杀“已申请财产保全”）；抽象特征规则应采用复合判定（抽象定性词 + 缺少实质要素），避免单一正则量词松懈（如多加 `?`）导致漏杀。
-- **测试命令真实性与收集数核验**：审查 PR/任务凭据中的 pytest 命令，核对 `-k` 表达式是否命中真实测试类名；核验测试控制台输出中的 `collected X items` 确实大于 0，严禁将收集数为 0 的退出码 0 视作绿灯通过。
+- **测试命令真实性与收集数**：核验标准见 `testing-tdd-skills-standards.md §3`（`collected > 0` 才算绿灯）。
 - **跨模块公开契约与降级分支覆盖**：检查是否违规跨模块调用下划线私有方法/别名（如 `_assemble_recipe_parts`）；检查具有注册中心回退机制的模块是否编写了独立 Mock（如注册中心返回 `None`）的本地降级单测。
 - **领域配置异常原样透传**：检查兜底逻辑是否使用了宽泛 `except Exception` 导致特定配置异常（如 `RecipeNotFoundError`）被通用错误改写，确保错误归因链清晰。
 - **常量抽取与调用点全面替换**：检查抽取公共常量（如 `ABSTRACT_CRITIQUE_PATTERN`）后是否全局替换了所有内联调用，检查正则表达式语义与修饰符是否保持严格一致。
@@ -80,10 +72,9 @@ globs: "*"
 - **Core-Engine 客户端消灭裸字典直读**：审查 `internal_data_rpc.py` 是否使用强类型 Pydantic 模型（`CauseCandidatesResponse`、`StatuteAstGroundResponse`）入站反序列化校验，是否仅捕获 `ValidationError` 走既有兜底；
 - **引擎消费闭环与端到端往返验证**：审查 `core_engine_service/runner/adapter.py` 是否将 `request.baseline_payload` 转换为字典合并进 `established_baseline`，是否将 `facts_envelope` 转换为 `case_facts`；核验「backend 序列化 → engine 反序列化 → adapter 合并 → formatter 可见」往返测试，确保字段不丢、键名保持 `snake_case`。
 
-### 5.5 LLM 返回内容测试审查门禁 (Live LLM 真实测试与 3 次稳定性凭据)
+### 5.5 LLM 返回内容测试审查门禁
 
-- **核验真实模型调用凭据**：凡涉及 Prompt 配方、智能体推理决策逻辑、公文/文书正文生成或模型结构化解析的代码变更，审查时必须核验测试凭据中是否包含 Live LLM 真实调用的命令输出与日志记录，严禁接受仅用纯 Mock 伪造绿灯的通过结论；
-- **核验 3 次稳定性测试记录**：审查测试记录是否至少完整执行了 3 次（$N \ge 3$），核验各轮次在 XML/JSON 语法结构、必填要素提取完整度及事实一致性上是否保持稳定收敛，出现任何 1 次格式异常或崩溃均不得判定审查通过。
+- 审查标准统一见 `testing-tdd-skills-standards.md §4`（Live LLM 真实调用 + 至少 3 次稳定性）；审查时只核对凭据是否存在并如实记录，不重复展开判定细则。
 
 ## 6. 核心负向约束 (Hard Constraints)
 - **禁止裸露异常**: 严禁在 Python 中使用 `except:` 或 `except Exception: pass`。

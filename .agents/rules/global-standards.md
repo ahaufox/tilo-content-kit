@@ -27,29 +27,19 @@ trigger: always_on
 - **强制中文回复**: 无论用户何种语言，回复、文档、注释及 **Git 提交信息（Conventional Commits）必须严格使用中文**。
 - **零谄媚直奔主题**: 严禁使用虚浮奉承与情绪套话，执行控制与客观文风表达严格遵守 [agent-loop-control-standards.md](./agent-loop-control-standards.md)。
 - **平铺直叙客观文风 (反誓言与反口号)**: 规划、文档、方案、代码注释与答复中，少用/禁用“绝不”、“保证”、“铁律”、“死守”、“坚决”、“严防”等誓言式与绝对化修饰词；杜绝口号化、夸张性或情绪化修辞；陈述事实、职责分工、指标与预案时保持客观、平铺直叙。
-- **全局用户界面展示命名空间**: 面向普通用户与律师的 UI 视图、弹窗、Tab 标签与引导文案，**严禁使用开发者内部术语**（严禁“录入/清洗/交付物/物化/沙盒/驾驶舱/影响池/只读冻结/陈旧/沉淀/资产”等），统一遵守 `design.md §8` 与 `CONTEXT.md` 法定专业用词。
-- **Docstring 规范**: Python 模块、类及函数注释统一使用 **Google Style Docstrings**（中文描述，含 Args/Returns/Raises）。
+- **全局用户界面展示命名空间**: 面向普通用户与律师的 UI 视图、弹窗、Tab 标签与引导文案，**严禁使用开发者内部术语**（严禁“录入/清洗/交付物/物化/沙盒/驾驶舱/影响池/只读冻结/陈旧/沉淀/资产”等），统一遵守 `design.md §9` 与 `CONTEXT.md` 法定专业用词。
+- **Docstring 规范**: 统一使用 **Google Style Docstrings**（中文描述）；格式细则见 `backend-python-standards.md §8`，此处不重复。
 
 ## 4. 任务事实来源与任务归档 (SSOT)
 - **前置阅读**: 做任何事前先查阅 `docs/00-7待办/`（当前待办与已完成目录）与 `docs/02-规划/`，避免脱离既有规划。
-- **任务归档机制**: 任务执行统一在 `docs/00-7待办/<分层>/<专案>/`（主仓跨仓专案收敛于 `04-混合/`，单仓专案收敛于对应子仓 `docs/00-待办/<专案>/`）下进行；任务闭环后，原始方案与脚手架不做物理删除，统一完整移动至对应仓的 `已完成/<专案>/` 保留复盘底稿，未来由人工定期手动批量清理。物理目录位置即状态，无需维护中心化总清单。
+- **任务归档机制**: 物理路由与「目录即状态」规则见 `docs-linkage.md §2`，本文件不重复。
 
 ## 5. 全链路字段映射防呆与节点调度契约 (SSOT)
 - **单一事实来源**: 后端 `contracts/openapi-*.json` 与强类型 SDK（`@tilo/api-client` / `tilo-core-sdk`）是数据契约的单一源头。
 - **强类型独治**: 前端严禁手写 API 响应 interface，必须从生成类型导入；禁止在业务层手动写 `snake_case ↔ camelCase` 映射，统一收敛在 Schema 基类（`CamelCaseBaseModel`）或 `lib/normalize/`。
 - **Pydantic model_dump() 键命名契约**: 请求模型（如 `UIStateRequest`）经 Pydantic `model_dump()` 转换为字典后，其键名统一且唯一为 Python 字段标准命名（`snake_case`，如 `selected_node_key`）。业务服务层（如 `intent_compiler.py`）、Agent 与 Handler 读取该字典时**必须严格且唯一使用 `snake_case`（如 `ui_state.get("selected_node_key")`）**，严禁做 `camelCase`（如 `selectedNodeKey`）双向冗余兼容，彻底杜绝键名混淆导致的隐性 `None`。
 - **严禁静态节点意图匹配器**: 工作流节点的执行调度必须严格依赖上下文强契约（`selected_node_key` / `target_node_key`）或模型 Tool-Calling 动态识别，**严禁在代码中维护 `node_matcher` 或针对工作流节点的正则表达式/文本字典映射表**。坚决杜绝此类硬编码引入的沉重维护负担与潜在分叉。
-- **双向对称契约与 Backend 内部专线 SSOT (514 专案)**:
-  - **契约对称化治理**: 核心研判引擎对外具备标准契约，业务后端向核心引擎提供的内部专线接口（`/api/v1/internal/*`）同样必须作为一等公民契约治理，统一由 `generate_openapi.py` 提取导出 `contracts/openapi-backend-internal.json` 与版本快照，作为引擎消费后端数据的唯一 SSOT。
-  - **反向最小暴露面 (红线)**: 对外客户端契约（`openapi-frontend.json`）与特权全量契约（`openapi-full.json`）严禁包含任何 `/api/v1/internal/*` 内部专线端点，由 `openapi_config.py` 严格过滤排除并加自动化导出断言测试门禁。
-  - **内部专线鉴权**: 所有 `/api/v1/internal/*` 路由统一挂载 `Depends(verify_internal_service_token)` 守卫，强校验请求头 `X-Internal-Token`。
-  - **内部契约版本解耦**: 内部契约快照版本通过 `resolve_internal_contract_version` 独立解析，禁止复用对外发布 tag，避免对外发版节奏锁死内部契约演进或覆盖同名快照。
-- **跨微服务案情生命周期版本化强类型 Schema (514 专案)**:
-  - **强类型同构契约**: 案情基准要素采用强类型 `CaseBaselinePayloadV1`（与 `EstablishedBaseline` 严格同构，`parties: Dict[str, Any]` 保留主体地位与 `procedural_history`，严禁拆成平行列表导致主体地位丢失）；结构化事实信封采用 `CaseFactsEnvelopeV1`（直接复用专案 162 `SemanticFact` 作为 SSOT，严禁另立平行模型）。
-  - **版本字段语义隔离与单版本声明**: `EngineExecutionRequest.case_schema_version` 仅声明案情载荷 Schema 版本，与 API/HTTP 层 `x-contract-version` 语义严格隔离。当前仅 V1，在 backend、core-engine、core SDK 三处统一声明为 `Literal["1.0"]`，在后续增量专案落地前严禁自造 2.0 模型或协商分支。
-  - **三处同构门禁**: `EngineExecutionRequest` 在 backend、core-engine 及 core SDK 三处的定义字段必须 100% 同构，受 `check_contract_compat.sh` 脚本门禁审计，严禁因 `extra="ignore"` 静默丢弃新字段。
-  - **防御性回填判型**: 未显式传参时从 `global_ctx` 回填必须 `isinstance(raw, dict)` 判型，捕获 `ValidationError` 记 warning 保留 `None`，严禁 bare `except Exception: pass`。
-  - **消灭 Core-Engine 裸字典直读**: 核心引擎消费内部专线（`/statute/cause-candidates`、`/statute/ast-ground` 等）时，禁止手写裸字典消费 `resp.json()`，必须通过入站 Pydantic 模型反序列化校验。
+- **514 专案双向对称契约与案情版本化 Schema**：内部专线独立 OpenAPI 导出与版本解耦、反向最小暴露面、`CaseBaselinePayloadV1` / `CaseFactsEnvelopeV1`、三处同构门禁与入站强类型反序列化等细则，见 `backend-api-collaboration-rule.md §2` 与 `backend-python-standards.md §3.5`，本文件不重复。
 
 ## 5.1 契约事实源与跨端对称门禁（216 复盘）
 - **文档事实源**: `spec.md` / `data-model.md` / `contracts/*.md` / `plan.md` / `quickstart.md` 中出现的字段名、枚举值、类型定义、模型文件路径、pytest 命令与 `-k` 表达式，必须逐项从真实源码或可执行命令反推，禁止凭记忆编写。行号、组件行数属于易漂移信息，文档中只写「入口文件 + 检索符号」；确需写数字时必须附复跑命令。
@@ -101,7 +91,7 @@ trigger: always_on
   - 核心研判引擎 `tilo-core-engine` 为独立子仓（Prompt 资产与无状态推理 SSOT）；
   - 历史基于脚本强拷贝同步的机制（`sync_app_from_backend.sh`、`sync_backend_from_app.sh` 等）已彻底废弃。
 - **标准子模块提交流程 (SSOT)**:
-  - **用户 Review 门禁（提交前置条件）**：以下多仓提交流程**仅在用户 Review 通过并明确发出提交指示后方可执行**。智能体在日常开发或缺陷修复中，严禁未获确认私自自动执行子仓或主仓提交与推送。
+  - **提交前置门禁**：见 `git-commit-message.md §1`；以下多仓流程仅在用户明确发出提交指示后执行。
   - **子仓代码提交与推送**: 在用户明确确认后，在对应的子模块目录下进行独立的 Git 提交与推送：
     ```bash
     # 业务后端修改
